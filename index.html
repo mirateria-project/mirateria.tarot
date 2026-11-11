@@ -188,6 +188,7 @@ body.isoff .offline{display:block}
 .hitem{display:block;width:100%;text-align:left;background:#f3ecff;border:2px solid #d6c6ff;border-radius:14px;padding:10px 12px;font:inherit;color:#2a1260;cursor:pointer}
 .hitem.press,.hitem:active{transform:scale(.98);background:#e5d9ff}
 .hitem small{color:#7a68a8}
+.errbox{margin-top:12px;background:#fff;color:#333;border:3px solid #e0002a;border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.5;word-break:break-all}
 .toast{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%);background:#2a1260;color:#fff;border:2px solid #f5c542;
   border-radius:14px;padding:10px 16px;font-weight:800;z-index:70;display:none;max-width:90%}
 .toast.on{display:block;animation:fadein .2s}
@@ -295,7 +296,7 @@ body.isoff .offline{display:block}
 <script>
 (()=>{
 "use strict";
-const APP_VERSION="1.0.0";
+const APP_VERSION="1.0.1";
 const PROXY="https://tarot-proxy.e46-toshi-1124.workers.dev";
 const INSTA="https://www.instagram.com/mirateria.project/";
 const LANG=((navigator.languages&&navigator.languages[0])||navigator.language||"ja").toLowerCase().startsWith("ja")?"ja":"en";
@@ -715,21 +716,25 @@ function parseReading(txt){
   if(!FACES[mood]||mood==="angry")mood="normal";
   return {mood,summary,body:body.trim()};
 }
-async function callAI(){
-  if(!navigator.onLine)throw {kind:"off"};
-  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),120000);
-  let r;
+async function callAI(text,maxTok){
+  if(!navigator.onLine)throw {kind:"off",detail:"offline"};
+  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),150000);
+  const t0=Date.now();let r;
   try{
     r=await fetch(PROXY,{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,
-      body:JSON.stringify({contents:[{role:"user",parts:[{text:buildPrompt()}]}],generationConfig:{temperature:.95,maxOutputTokens:8192}})});
-  }catch(e){clearTimeout(to);throw {kind:"net"}}
+      body:JSON.stringify({contents:[{role:"user",parts:[{text:text||buildPrompt()}]}],generationConfig:{temperature:.95,maxOutputTokens:maxTok||8192}})});
+  }catch(e){clearTimeout(to);throw {kind:"net",detail:`fetch failed: ${e&&e.name||""} ${e&&e.message||e} (${Math.round((Date.now()-t0)/1000)}s)`}}
   clearTimeout(to);
-  if(r.status===429||r.status===503)throw {kind:"busy"};
-  let j;try{j=await r.json()}catch(e){throw {kind:"net"}}
-  if(!r.ok||j.error)throw {kind:(j&&j.error&&j.error.code===429)?"busy":"net"};
-  const parts=(j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[];
+  const raw=await r.text().catch(()=>"");
+  let j=null;try{j=JSON.parse(raw)}catch(e){}
+  if(!r.ok||!j||j.error){
+    const em=j&&j.error?`${j.error.code||""} ${j.error.status||""} ${j.error.message||""}`:raw.slice(0,300);
+    throw {kind:(r.status===429||r.status===503||(j&&j.error&&j.error.code===429))?"busy":"net",detail:`HTTP ${r.status}: ${em}`};
+  }
+  const cand=j.candidates&&j.candidates[0];
+  const parts=(cand&&cand.content&&cand.content.parts)||[];
   const txt=parts.filter(p=>!p.thought&&p.text).map(p=>p.text).join("");
-  if(!txt)throw {kind:"net"};
+  if(!txt)throw {kind:"net",detail:`empty: finish=${cand&&cand.finishReason} block=${j.promptFeedback&&j.promptFeedback.blockReason}`};
   return txt;
 }
 function revealCards(){
@@ -757,6 +762,10 @@ async function doAI(){
   }catch(e){
     const k=e&&e.kind;$("resultBox").innerHTML="";
     say("bubRead","shiRead",k==="busy"?T.errBusy:k==="off"?T.errOff:T.errNet,"worry");$("retry").style.display="block";
+    // 原因を画面に出す（スクショで送れるように）
+    let test="";
+    if(k!=="off"){try{const t=await callAI("Reply with the single word OK.",1000);test="mini test: OK ("+t.trim().slice(0,20)+")"}catch(e2){test="mini test: NG "+(e2&&e2.detail||"")}}
+    $("resultBox").innerHTML=`<div class="errbox"><b>${LANG==="ja"?"エラーの内容（このままスクショを送ってね）":"Error details (please send a screenshot)"}</b><br>v${APP_VERSION}<br>${escapeHTML((e&&e.detail)||String(e))}<br>${escapeHTML(test)}</div>`;
   }
 }
 $("retry").addEventListener("click",()=>{if(!reading){reading=true;doAI().finally(()=>reading=false)}});
