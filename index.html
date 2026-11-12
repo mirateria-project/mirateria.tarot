@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -158,6 +159,9 @@ textarea.inp{min-height:84px;resize:vertical}
 .rev{color:#ffb3d9;font-weight:800}
 
 /* loader */
+.waitpill{display:block;width:max-content;max-width:92%;margin:6px auto 10px;padding:8px 18px;border-radius:999px;background:#fff;color:#3a2470;font-weight:900;font-size:17px;box-shadow:0 0 0 3px #f5c542,0 4px 14px #0006;animation:wpulse 1.6s ease-in-out infinite}
+.waitpill[hidden]{display:none}
+@keyframes wpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .dots span{display:inline-block;animation:dot 1s infinite}
 .dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
 @keyframes dot{50%{transform:translateY(-5px);opacity:.4}}
@@ -273,6 +277,7 @@ body.isoff .offline{display:block}
       <div class="bubble" id="bubRead"></div>
       <img class="shi small" id="shiRead" src="shi-serious.png" alt="">
     </div>
+    <div class="waitpill" id="waitPill" hidden></div>
     <div class="spread" id="spread"></div>
     <div class="cardlist" id="cardlist"></div>
     <div id="resultBox"></div>
@@ -296,7 +301,7 @@ body.isoff .offline{display:block}
 <script>
 (()=>{
 "use strict";
-const APP_VERSION="1.0.1";
+const APP_VERSION="1.0.2";
 const PROXY="https://tarot-proxy.e46-toshi-1124.workers.dev";
 const INSTA="https://www.instagram.com/mirateria.project/";
 const LANG=((navigator.languages&&navigator.languages[0])||navigator.language||"ja").toLowerCase().startsWith("ja")?"ja":"en";
@@ -324,7 +329,7 @@ ja:{title:"しーちゃんのタロット占い",subtitle:"ケルト十字で、
  inputBub:"占いたいことを選んでね。名前や住所は書かないでね🙅",
  pickBub:"心を落ち着けて…ピンときたカードを10枚えらんでね",pickCount:(n)=>`えらんだカード <b>${n}</b> / 10`,
  shuffling:"シャッフル中…🌀",
- readOpen:"カードをめくるよ…",readThink:"カードの声を聞いてるよ。少し待ってね",
+ readOpen:"カードをめくるよ…",readThink:"カードの声を聞いてるよ。長いと2分くらいかかるから、画面はそのままで待っててね",waitT:s=>`⏳ 占い中… ${s}秒（長いと2分半くらい）`,
  errNet:"ごめんね、星の声が届かなかったみたい…。電波のいい所で、もう一度ためしてね",
  errBusy:"今日はたくさん占ったから、水晶玉がひと休み中…。少し時間をおいてためしてね",
  errOff:"ネットにつながっていないみたい。つながったら、もう一度ためしてね",
@@ -359,7 +364,7 @@ en:{title:"Shi-chan's Tarot",subtitle:"A deep Celtic Cross reading of your true 
  inputBub:"Choose a theme. Please don't write your name or address 🙅",
  pickBub:"Calm your mind… pick 10 cards that call to you",pickCount:(n)=>`Chosen <b>${n}</b> / 10`,
  shuffling:"Shuffling… 🌀",
- readOpen:"Turning the cards…",readThink:"Listening to the cards. Just a moment",
+ readOpen:"Turning the cards…",readThink:"Listening to the cards. It can take up to 2 minutes, so please keep this screen open",waitT:s=>`⏳ Reading… ${s}s (can take up to 2.5 min)`,
  errNet:"Sorry, the stars' voice didn't reach me… Please try again where the signal is good.",
  errBusy:"My crystal ball is resting after many readings today… Please try again a little later.",
  errOff:"You seem to be offline. Please try again once connected.",
@@ -755,8 +760,10 @@ async function doAI(){
   $("retry").style.display="none";
   say("bubRead","shiRead",T.readThink,"serious");
   $("resultBox").innerHTML=`<div class="result" style="text-align:center;font-size:20px"><span class="dots"><span>🔮</span><span>✨</span><span>🔮</span></span></div>`;
+  const wp=$("waitPill"),w0=Date.now(),wtick=()=>{wp.textContent=T.waitT(Math.round((Date.now()-w0)/1000))};
+  wtick();wp.hidden=false;const wt=setInterval(wtick,1000);
   try{
-    const txt=await callAI();const p=parseReading(txt);
+    const txt=await callAI().finally(()=>{clearInterval(wt);wp.hidden=true});const p=parseReading(txt);
     state.reading={...p,date:Date.now(),genre:state.genre,picked:state.picked};saveState();
     addHistory(state.reading);showResult(state.reading,true);
   }catch(e){
@@ -887,3 +894,5 @@ if("serviceWorker" in navigator){
 </script>
 </body>
 </html>
+
+</body></html>

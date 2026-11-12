@@ -1,6 +1,6 @@
 /* しーちゃんのタロット占い — service worker
    新しい版をGitHubに上げたら VERSION の数字を変えるだけで、ホーム画面のアプリも自動で新しくなります */
-const VERSION = "tarot-v1.0.1";
+const VERSION = "tarot-v1.0.2";
 const FILES = [
   "./", "index.html", "manifest.json",
   "icon-180.png", "icon-192.png", "icon-512.png",
