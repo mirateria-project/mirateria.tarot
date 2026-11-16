@@ -301,7 +301,7 @@ body.isoff .offline{display:block}
 <script>
 (()=>{
 "use strict";
-const APP_VERSION="1.0.3";
+const APP_VERSION="1.0.4";
 const PROXY="https://tarot-proxy.e46-toshi-1124.workers.dev";
 const INSTA="https://www.instagram.com/mirateria.project/";
 const LANG=((navigator.languages&&navigator.languages[0])||navigator.language||"ja").toLowerCase().startsWith("ja")?"ja":"en";
@@ -329,11 +329,11 @@ ja:{title:"しーちゃんのタロット占い",subtitle:"ケルト十字で、
  inputBub:"占いたいことを選んでね。名前や住所は書かないでね🙅",
  pickBub:"心を落ち着けて…ピンときたカードを10枚えらんでね",pickCount:(n)=>`えらんだカード <b>${n}</b> / 10`,
  shuffling:"シャッフル中…🌀",
- readOpen:"カードをめくるよ…",readThink:"カードの声を聞いてるよ。長いと2分くらいかかるから、画面はそのままで待っててね",waitT:s=>`⏳ 占い中… ${s}秒（長いと2分半くらい）`,
+ readOpen:"カードをめくるよ…",readThink:"カードの声を聞いてるよ。長いと2分くらいかかるから、画面はそのままで待っててね",waitT:s=>`⏳ 占い中… ${s}秒（混んでいると3分くらい）`,
  errNet:"ごめんね、星の声が届かなかったみたい…。電波のいい所で、もう一度ためしてね",
  errBusy:"今日はたくさん占ったから、水晶玉がひと休み中…。少し時間をおいてためしてね",
  errOff:"ネットにつながっていないみたい。つながったら、もう一度ためしてね",
- autoRetry:"水晶玉が混み合ってるみたい…。もう一回だけ聞いてみるね",
+ autoRetry:n=>`水晶玉が混み合ってるみたい…。ちょっと待って、もう一回聞いてみるね（${n}回目）`,
  resumeQ:"前の占いが途中みたい。続きから見る？それとも最初から占う？",resumeGo:"▶ 続きから見る",resumeNew:"🔮 最初から占う",
  needGenre:"何を占うか選んでね！",
  freeBad:"電話番号やメールアドレスのような文字があるよ。消してから進んでね",
@@ -366,11 +366,11 @@ en:{title:"Shi-chan's Tarot",subtitle:"A deep Celtic Cross reading of your true 
  inputBub:"Choose a theme. Please don't write your name or address 🙅",
  pickBub:"Calm your mind… pick 10 cards that call to you",pickCount:(n)=>`Chosen <b>${n}</b> / 10`,
  shuffling:"Shuffling… 🌀",
- readOpen:"Turning the cards…",readThink:"Listening to the cards. It can take up to 2 minutes, so please keep this screen open",waitT:s=>`⏳ Reading… ${s}s (can take up to 2.5 min)`,
+ readOpen:"Turning the cards…",readThink:"Listening to the cards. It can take up to 2 minutes, so please keep this screen open",waitT:s=>`⏳ Reading… ${s}s (up to ~3 min when busy)`,
  errNet:"Sorry, the stars' voice didn't reach me… Please try again where the signal is good.",
  errBusy:"My crystal ball is resting after many readings today… Please try again a little later.",
  errOff:"You seem to be offline. Please try again once connected.",
- autoRetry:"The crystal ball is busy… I'll ask one more time.",
+ autoRetry:n=>`The crystal ball is busy… I'll wait a moment and ask again (try ${n}).`,
  resumeQ:"Your last reading was left unfinished. Continue it, or start a new one?",resumeGo:"▶ Continue",resumeNew:"🔮 Start over",
  needGenre:"Please choose a theme!",
  freeBad:"That looks like a phone number or email. Please remove it to continue.",
@@ -666,6 +666,7 @@ ${cards}
 - 怖がらせない。「死神」「塔」なども変化や再生のメッセージとして伝える。断定しすぎない。
 - 病気・お金の投資・法律などは断定的な助言をせず、必要なら専門家への相談をすすめる。
 - 名前や住所など個人情報をたずねない。
+- 決まり文句・どの人にも当てはまる定型文は使わない。毎回この10枚の組み合わせからしか出てこない言葉で書く。
 - 全体で2500〜3500文字くらい。
 
 【出力形式（この形を必ず守る）】
@@ -692,6 +693,7 @@ ${cards}
 - Never frighten. Present Death / The Tower as change and renewal. Avoid fatalism.
 - No definitive medical, investment or legal advice; suggest professionals when relevant.
 - Never ask for personal information.
+- No stock phrases or one-size-fits-all lines; every sentence must come from this exact combination of ten cards.
 - About 900–1300 words.
 
 [Output format (must follow)]
@@ -727,7 +729,7 @@ function parseReading(txt){
 }
 async function callAI(text,maxTok){
   if(!navigator.onLine)throw {kind:"off",detail:"offline"};
-  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),95000);
+  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),100000);
   const t0=Date.now();let r;
   try{
     r=await fetch(PROXY,{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,
@@ -744,7 +746,8 @@ async function callAI(text,maxTok){
   const cand=j.candidates&&j.candidates[0];
   const parts=(cand&&cand.content&&cand.content.parts)||[];
   const txt=parts.filter(p=>!p.thought&&p.text).map(p=>p.text).join("");
-  if(!txt)throw {kind:"net",detail:`empty: finish=${cand&&cand.finishReason} block=${j.promptFeedback&&j.promptFeedback.blockReason}`};
+  if(!txt)throw {kind:"busy",detail:`empty: finish=${cand&&cand.finishReason} block=${j.promptFeedback&&j.promptFeedback.blockReason}`};
+  callAI.model=r.headers.get("X-Model")||"";
   return txt;
 }
 function revealCards(){
@@ -768,18 +771,16 @@ async function doAI(){
   const wp=$("waitPill"),w0=Date.now(),wtick=()=>{wp.textContent=T.waitT(Math.round((Date.now()-w0)/1000))};
   wtick();wp.hidden=false;const wt=setInterval(wtick,1000);
   try{
-    let txt;
-    try{txt=await callAI()}
-    catch(e1){
-      if(!e1||e1.kind==="off")throw e1;
-      // 混んでいた時は、少し待って自動でもう一回だけ聞く
-      say("bubRead","shiRead",T.autoRetry,"worry");
-      await new Promise(r=>setTimeout(r,2500));
-      say("bubRead","shiRead",T.readThink,"serious");
-      txt=await callAI();
+    // 混んでいた時は、少し待って自動でやり直す（全部で3回まで）
+    let txt,lastErr;const waits=[0,4000,10000];
+    for(let n=0;n<waits.length;n++){
+      if(n>0){say("bubRead","shiRead",T.autoRetry(n+1),"worry");await new Promise(r=>setTimeout(r,waits[n]));say("bubRead","shiRead",T.readThink,"serious")}
+      try{txt=await callAI();break}
+      catch(e1){lastErr=e1;if(!e1||e1.kind==="off")throw e1}
     }
+    if(!txt)throw lastErr;
     clearInterval(wt);wp.hidden=true;const p=parseReading(txt);
-    state.reading={...p,date:Date.now(),genre:state.genre,picked:state.picked};saveState();
+    state.reading={...p,model:callAI.model||"",date:Date.now(),genre:state.genre,picked:state.picked};saveState();
     addHistory(state.reading);showResult(state.reading,true);
   }catch(e){
     clearInterval(wt);wp.hidden=true;
@@ -793,7 +794,7 @@ async function doAI(){
 }
 $("retry").addEventListener("click",()=>{if(!reading){reading=true;doAI().finally(()=>reading=false)}});
 function showResult(rd,fresh){
-  $("resultBox").innerHTML=`<div class="result" id="resultText">${md(rd.body)}</div>`;
+  $("resultBox").innerHTML=`<div class="result" id="resultText">${md(rd.body)}</div>`+(rd.model?`<div style="text-align:right;font-size:11px;color:#9a8cc8;margin-top:4px">🔮 ${escapeHTML(rd.model)}</div>`:"");
   $("readBtns").style.display="block";
   if(fresh){sfx.sparkle()}
   say("bubRead","shiRead",rd.summary||T.mood,rd.mood);
@@ -898,7 +899,7 @@ if(launches===100&&!store.get("thanks100",false)){store.set("thanks100",true);
       <button class="btn" id="rsGo" style="width:100%;margin-top:8px">${T.resumeGo}</button>
       <button class="btn pink" id="rsNew" style="width:100%;margin-top:12px">${T.resumeNew}</button>`);
     $("rsGo").addEventListener("click",()=>{closeModal();state.screen=sc;restore()});
-    $("rsNew").addEventListener("click",()=>{closeModal();state.picked=[];state.deckOrder=null;state.reading=null;saveState();show("scInput")});
+    $("rsNew").addEventListener("click",()=>{closeModal();Object.assign(state,{genre:null,gender:null,age:null,free:"",picked:[],deckOrder:null,reading:null});saveState();show("scInput")});
     return;
   }
   if(sc==="scRead"&&state.reading&&state.picked.length===10){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on",s.id==="scRead"));buildSpread(true);showResult(state.reading,false)}
