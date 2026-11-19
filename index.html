@@ -76,6 +76,17 @@ h1{font-size:23px;text-align:center;margin:4px 0 2px;letter-spacing:.04em;
 .shi{width:min(64vw,270px);height:auto;cursor:pointer;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));transform-origin:50% 95%;
   animation:float 3.4s ease-in-out infinite;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 .shi.small{width:min(40vw,170px)}
+.shiwrap{position:relative;display:inline-block}
+.fxl{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.fxl span{position:absolute;font-size:22px;line-height:1}
+.fxl .drop{animation:drop 1.3s ease-in forwards}
+@keyframes drop{0%{opacity:0;transform:translateY(-6px) scale(.6)}15%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(46px) scale(.9)}}
+.fxl .spk{animation:spk 1.1s ease-out forwards}
+@keyframes spk{0%{opacity:0;transform:translate(0,0) scale(.3)}30%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2)}}
+.fxl .flash{left:50%;bottom:6%;width:70%;height:40%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(220,200,255,.95),rgba(170,140,255,0) 70%);animation:flash 1.2s ease-out forwards}
+@keyframes flash{0%{opacity:0;transform:translateX(-50%) scale(.4)}25%{opacity:1;transform:translateX(-50%) scale(1.2)}100%{opacity:0;transform:translateX(-50%) scale(1.6)}}
+.shi.shake{animation:shake .6s ease-in-out}
+@keyframes shake{15%{transform:translateX(-6px) rotate(-3deg)}35%{transform:translateX(6px) rotate(3deg)}55%{transform:translateX(-4px) rotate(-2deg)}75%{transform:translateX(4px) rotate(2deg)}}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .shi.talk{animation:talk .16s ease-in-out infinite alternate}
 @keyframes talk{from{transform:scale(1,1)}to{transform:scale(1.02,.975) translateY(2px)}}
@@ -275,7 +286,7 @@ body.isoff .offline{display:block}
   <section class="screen" id="scRead">
     <div class="stage">
       <div class="bubble" id="bubRead"></div>
-      <img class="shi small" id="shiRead" src="shi-serious.png" alt="">
+      <div class="shiwrap"><img class="shi small" id="shiRead" src="shi-serious.png" alt=""><div class="fxl" id="fxRead"></div></div>
     </div>
     <div class="waitpill" id="waitPill" hidden></div>
     <div class="spread" id="spread"></div>
@@ -301,7 +312,7 @@ body.isoff .offline{display:block}
 <script>
 (()=>{
 "use strict";
-const APP_VERSION="1.0.4";
+const APP_VERSION="1.0.5";
 const PROXY="https://tarot-proxy.e46-toshi-1124.workers.dev";
 const INSTA="https://www.instagram.com/mirateria.project/";
 const LANG=((navigator.languages&&navigator.languages[0])||navigator.language||"ja").toLowerCase().startsWith("ja")?"ja":"en";
@@ -329,7 +340,15 @@ ja:{title:"しーちゃんのタロット占い",subtitle:"ケルト十字で、
  inputBub:"占いたいことを選んでね。名前や住所は書かないでね🙅",
  pickBub:"心を落ち着けて…ピンときたカードを10枚えらんでね",pickCount:(n)=>`えらんだカード <b>${n}</b> / 10`,
  shuffling:"シャッフル中…🌀",
- readOpen:"カードをめくるよ…",readThink:"カードの声を聞いてるよ。長いと2分くらいかかるから、画面はそのままで待っててね",waitT:s=>`⏳ 占い中… ${s}秒（混んでいると3分くらい）`,
+ readOpen:"カードをめくるよ…",
+ waitTalk:[["normal","ふむふむ…カードがしゃべり始めたよ",null],["surprise","え？こ、これは…",'sweat'],["worry","ちょ、ちょっと待ってね…水晶玉がゆれてる…",'shake'],["serious","むむむ…見えてきた！",'flash'],["joy","おっ、いい感じかも〜！",'sparkle'],
+  ["surprise","えっ！？…あ、なんだ、星が光っただけだった",'sweat'],["serious","しーっ…今いいところだから…",null],["worry","ひゃ〜、カードの声が小さくて聞き取りにくい…",'sweat'],["joy","水晶玉がキラキラしてきた✨",'sparkle'],["serious","カード同士がひそひそ話してる…",'flash'],
+  ["surprise","はっ…！ い、今なにか見えた気がする…",'shake'],["normal","もうちょっとだけ待っててね〜",null]],
+ waitCard:{M16:["surprise","と、塔のカード…！？ だ、大丈夫、ちゃんと読むからね💦",'sweat'],M13:["worry","し、死神…！？ あ、これは『生まれ変わり』のカードだから安心してね",'sweat'],
+  M19:["joy","太陽さんがニコニコしてる☀️",'sparkle'],M17:["joy","星のカードがキラッて光った⭐",'sparkle'],M10:["surprise","運命の輪がくるくる回ってる…！",'shake'],
+  M15:["worry","あ、悪魔さん…こっち見てる…💦",'sweat'],M18:["serious","月のカード…ちょっとミステリアス🌙",'flash'],M6:["joy","恋人のカード…ドキドキ💗",'sparkle'],
+  M21:["joy","世界のカード！これは大きいよ〜！",'sparkle'],M0:["normal","愚者さんが自由に歩いてる〜",null],M1:["serious","魔術師さんが何か準備してる…",'flash'],M20:["surprise","審判のラッパが鳴った…！",'shake']},
+ waitAny:n=>`「${n}」のカードが何か言ってる…`,readThink:"カードの声を聞いてるよ。長いと2分くらいかかるから、画面はそのままで待っててね",waitT:s=>`⏳ 占い中… ${s}秒（混んでいると3分くらい）`,
  errNet:"ごめんね、星の声が届かなかったみたい…。電波のいい所で、もう一度ためしてね",
  errBusy:"今日はたくさん占ったから、水晶玉がひと休み中…。少し時間をおいてためしてね",
  errOff:"ネットにつながっていないみたい。つながったら、もう一度ためしてね",
@@ -366,7 +385,15 @@ en:{title:"Shi-chan's Tarot",subtitle:"A deep Celtic Cross reading of your true 
  inputBub:"Choose a theme. Please don't write your name or address 🙅",
  pickBub:"Calm your mind… pick 10 cards that call to you",pickCount:(n)=>`Chosen <b>${n}</b> / 10`,
  shuffling:"Shuffling… 🌀",
- readOpen:"Turning the cards…",readThink:"Listening to the cards. It can take up to 2 minutes, so please keep this screen open",waitT:s=>`⏳ Reading… ${s}s (up to ~3 min when busy)`,
+ readOpen:"Turning the cards…",
+ waitTalk:[["normal","Hmm hmm… the cards are starting to talk",null],["surprise","Wh-what? Th-this is…",'sweat'],["worry","W-wait a sec… the crystal ball is shaking…",'shake'],["serious","Hmmm… I can see something!",'flash'],["joy","Ooh, this might be good~!",'sparkle'],
+  ["surprise","Huh!? …oh, it was just a star twinkling",'sweat'],["serious","Shh… this is the good part…",null],["worry","Eek~ the cards are whispering too quietly…",'sweat'],["joy","The crystal ball is sparkling ✨",'sparkle'],["serious","The cards are whispering to each other…",'flash'],
+  ["surprise","Ah…! I-I think I just saw something…",'shake'],["normal","Just a little longer~",null]],
+ waitCard:{M16:["surprise","Th-the Tower…!? D-don't worry, I'll read it properly 💦",'sweat'],M13:["worry","D-Death…!? Oh, it's the card of rebirth, so don't worry",'sweat'],
+  M19:["joy","The Sun is smiling ☀️",'sparkle'],M17:["joy","The Star just twinkled ⭐",'sparkle'],M10:["surprise","The Wheel of Fortune is spinning…!",'shake'],
+  M15:["worry","Th-the Devil… is looking at me… 💦",'sweat'],M18:["serious","The Moon… a little mysterious 🌙",'flash'],M6:["joy","The Lovers… heart pounding 💗",'sparkle'],
+  M21:["joy","The World! This is a big one~!",'sparkle'],M0:["normal","The Fool is wandering freely~",null],M1:["serious","The Magician is preparing something…",'flash'],M20:["surprise","Judgement's trumpet just sounded…!",'shake']},
+ waitAny:n=>`"${n}" is trying to say something…`,readThink:"Listening to the cards. It can take up to 2 minutes, so please keep this screen open",waitT:s=>`⏳ Reading… ${s}s (up to ~3 min when busy)`,
  errNet:"Sorry, the stars' voice didn't reach me… Please try again where the signal is good.",
  errBusy:"My crystal ball is resting after many readings today… Please try again a little later.",
  errOff:"You seem to be offline. Please try again once connected.",
@@ -451,7 +478,7 @@ document.addEventListener("touchstart",()=>{},{passive:true});
 document.addEventListener("pointerdown",e=>{
   const el=e.target.closest(FUNC);if(!el||el.disabled)return;
   el.classList.add("press");
-  if(!el.matches(".shi,.kh,.back"))sfx.pip();
+  if(!el.matches(".shi,.kh,.back.taken"))sfx.pip();
   const up=()=>{el.classList.remove("press");window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",up)};
   window.addEventListener("pointerup",up);window.addEventListener("pointercancel",up);
 },true);
@@ -483,7 +510,7 @@ function setFace(imgId,face){$(imgId).src=FACES[face]||FACES.normal}
 const state=Object.assign({screen:"scHome",genre:null,gender:null,age:null,name:"",free:"",picked:[],deckOrder:null,reading:null},store.get("state",{}));
 function saveState(){store.set("state",state)}
 ["pagehide","beforeunload"].forEach(ev=>window.addEventListener(ev,saveState));
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveState()});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveState();else if(reading&&readCtrl&&Date.now()-readStart>READ_CAP){try{readCtrl.abort()}catch(e){}}});
 
 /* ---------- stars ---------- */
 (function(){const s=$("stars");for(let i=0;i<40;i++){const e=document.createElement("div");e.className="st";e.textContent=Math.random()<.5?"✦":"·";
@@ -727,14 +754,14 @@ function parseReading(txt){
   if(!FACES[mood]||mood==="angry")mood="normal";
   return {mood,summary,body:body.trim()};
 }
-async function callAI(text,maxTok){
+async function callAI(text,maxTok,limitMs){
   if(!navigator.onLine)throw {kind:"off",detail:"offline"};
-  const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),100000);
+  const ctrl=new AbortController();readCtrl=ctrl;const to=setTimeout(()=>ctrl.abort(),Math.max(5000,Math.min(100000,limitMs||100000)));
   const t0=Date.now();let r;
   try{
     r=await fetch(PROXY,{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,
       body:JSON.stringify({contents:[{role:"user",parts:[{text:text||buildPrompt()}]}],generationConfig:{temperature:.95,maxOutputTokens:maxTok||8192}})});
-  }catch(e){clearTimeout(to);throw {kind:"net",detail:`fetch failed: ${e&&e.name||""} ${e&&e.message||e} (${Math.round((Date.now()-t0)/1000)}s)`}}
+  }catch(e){clearTimeout(to);throw {kind:(e&&e.name==="AbortError")?"busy":"net",detail:`fetch failed: ${e&&e.name||""} ${e&&e.message||e} (${Math.round((Date.now()-t0)/1000)}s)`}}
   clearTimeout(to);
   const raw=await r.text().catch(()=>"");
   let j=null;try{j=JSON.parse(raw)}catch(e){}
@@ -754,6 +781,36 @@ function revealCards(){
   return new Promise(res=>{const slots=[...document.querySelectorAll("#spread .slot")];let i=0;
     const step=()=>{if(i>=slots.length)return res();slots[i].classList.add("open");sfx.flip();i++;setTimeout(step,330)};step()});
 }
+/* ---------- waiting show: Shi-chan reacts while the AI reads (silent: bubble + face + effects) ---------- */
+function fxPlay(kind){
+  const L=$("fxRead");if(!L||!kind)return;
+  const add=(cls,txt,x,y,extra)=>{const e=document.createElement("span");e.className=cls;e.textContent=txt;e.style.left=x+"%";e.style.top=y+"%";if(extra)Object.assign(e.style,extra);L.appendChild(e);setTimeout(()=>e.remove(),1500);return e};
+  if(kind==="sweat"){[[78,8,0],[16,14,250],[84,22,500]].forEach(([x,y,d])=>setTimeout(()=>add("drop","💧",x,y),d));tone(900,.12,"sine",.04,0,500)}
+  else if(kind==="sparkle"){for(let i=0;i<7;i++){const a=i/7*Math.PI*2;add("spk",i%2?"✨":"⭐",45,62,{"--dx":Math.cos(a)*60+"px","--dy":Math.sin(a)*50+"px",animationDelay:(i*40)+"ms"})}sfx.sparkle()}
+  else if(kind==="flash"){const e=document.createElement("span");e.className="flash";L.appendChild(e);setTimeout(()=>e.remove(),1300);tone(1568,.35,"sine",.05)}
+  else if(kind==="shake"){const im=$("shiRead");im.classList.remove("shake");void im.offsetWidth;im.classList.add("shake");setTimeout(()=>im.classList.remove("shake"),650);tone(180,.2,"triangle",.06)}
+}
+const waitShow={t:0,i:0,list:[],hold:0,last:-1};
+function waitShowStart(){
+  const cards=[],seen=new Set();
+  (state.picked||[]).forEach(p=>{const c=CARDS[p.ci];if(!c||seen.has(c.id))return;seen.add(c.id);
+    if(T.waitCard[c.id])cards.push(T.waitCard[c.id]);});
+  // one or two plain "this card is saying something" lines with real card names
+  const named=(state.picked||[]).map(p=>CARDS[p.ci]).filter(c=>c&&!T.waitCard[c.id]);
+  for(let k=0;k<2&&named.length;k++){const c=named.splice(Math.floor(Math.random()*named.length),1)[0];cards.push(["serious",T.waitAny(cname(c)),"flash"])}
+  for(let i=cards.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]]}
+  waitShow.list=cards;waitShow.i=0;waitShow.t=Date.now()+4500;waitShow.last=-1;
+}
+function waitShowTick(){
+  const now=Date.now();if(now<waitShow.t||now<waitShow.hold)return;
+  waitShow.t=now+5000;
+  let r;
+  if(waitShow.i<waitShow.list.length&&Math.random()<.6)r=waitShow.list[waitShow.i++];
+  else{let k;do{k=Math.floor(Math.random()*T.waitTalk.length)}while(k===waitShow.last&&T.waitTalk.length>1);waitShow.last=k;r=T.waitTalk[k]}
+  say("bubRead","shiRead",r[1],r[0]);fxPlay(r[2]);
+}
+const READ_CAP=170000; // 全部で約3分を超えたら、待たずに「もう一度」を出す
+let readCtrl=null,readStart=0;
 let reading=false;
 async function startReading(){
   if(reading)return;reading=true;
@@ -768,17 +825,19 @@ async function doAI(){
   $("retry").style.display="none";
   say("bubRead","shiRead",T.readThink,"serious");
   $("resultBox").innerHTML=`<div class="result" style="text-align:center;font-size:20px"><span class="dots"><span>🔮</span><span>✨</span><span>🔮</span></span></div>`;
-  const wp=$("waitPill"),w0=Date.now(),wtick=()=>{wp.textContent=T.waitT(Math.round((Date.now()-w0)/1000))};
+  const wp=$("waitPill"),w0=Date.now();readStart=w0;waitShowStart();
+  const wtick=()=>{const el=Date.now()-w0;wp.textContent=T.waitT(Math.round(el/1000));if(el>READ_CAP+3000&&readCtrl){try{readCtrl.abort()}catch(e){}}else waitShowTick()};
   wtick();wp.hidden=false;const wt=setInterval(wtick,1000);
   try{
     // 混んでいた時は、少し待って自動でやり直す（全部で3回まで）
     let txt,lastErr;const waits=[0,4000,10000];
     for(let n=0;n<waits.length;n++){
-      if(n>0){say("bubRead","shiRead",T.autoRetry(n+1),"worry");await new Promise(r=>setTimeout(r,waits[n]));say("bubRead","shiRead",T.readThink,"serious")}
-      try{txt=await callAI();break}
+      const left=READ_CAP-(Date.now()-w0);if(left<15000)break;
+      if(n>0){waitShow.hold=Date.now()+waits[n]+5000;say("bubRead","shiRead",T.autoRetry(n+1),"worry");await new Promise(r=>setTimeout(r,waits[n]));}
+      try{txt=await callAI(null,null,READ_CAP-(Date.now()-w0));break}
       catch(e1){lastErr=e1;if(!e1||e1.kind==="off")throw e1}
     }
-    if(!txt)throw lastErr;
+    if(!txt)throw lastErr||{kind:"busy",detail:"time limit ("+Math.round((Date.now()-w0)/1000)+"s)"};
     clearInterval(wt);wp.hidden=true;const p=parseReading(txt);
     state.reading={...p,model:callAI.model||"",date:Date.now(),genre:state.genre,picked:state.picked};saveState();
     addHistory(state.reading);showResult(state.reading,true);
@@ -788,7 +847,7 @@ async function doAI(){
     say("bubRead","shiRead",k==="busy"?T.errBusy:k==="off"?T.errOff:T.errNet,"worry");$("retry").style.display="block";
     // 原因を画面に出す（スクショで送れるように）
     let test="";
-    if(k!=="off"){try{const t=await callAI("Reply with the single word OK.",1000);test="mini test: OK ("+t.trim().slice(0,20)+")"}catch(e2){test="mini test: NG "+(e2&&e2.detail||"")}}
+    if(k!=="off"){try{const t=await callAI("Reply with the single word OK.",1000,25000);test="mini test: OK ("+t.trim().slice(0,20)+")"}catch(e2){test="mini test: NG "+(e2&&e2.detail||"")}}
     $("resultBox").innerHTML=`<div class="errbox"><b>${LANG==="ja"?"エラーの内容（このままスクショを送ってね）":"Error details (please send a screenshot)"}</b><br>v${APP_VERSION}<br>${escapeHTML((e&&e.detail)||String(e))}<br>${escapeHTML(test)}</div>`;
   }
 }
