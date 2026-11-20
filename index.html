@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -177,6 +176,23 @@ textarea.inp{min-height:84px;resize:vertical}
 .dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
 @keyframes dot{50%{transform:translateY(-5px);opacity:.4}}
 
+/* ===== mode choice ===== */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode{appearance:none;font:inherit;color:#fff;cursor:pointer;text-align:center;border-radius:16px;padding:12px 8px;border:3px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.08);transition:transform .06s;user-select:none;-webkit-user-select:none}
+.mode b{display:block;font-size:17px;font-weight:900;margin-bottom:4px}
+.mode small{display:block;font-size:12px;line-height:1.45;color:#e6dcff;white-space:pre-line}
+.mode.on{background:linear-gradient(180deg,#fff3c4,#f5c542);border-color:#fff;color:#2a1260;box-shadow:0 0 16px rgba(245,197,66,.7)}
+.mode.on small{color:#4a2f8a}
+.mode.ai.on{background:linear-gradient(180deg,#ffd6f0,#c45bd8);color:#fff}
+.mode.ai.on small{color:#fff}
+.mode.press,.mode:active{transform:scale(.95);filter:brightness(1.12)}
+.mode:disabled{opacity:.45;cursor:not-allowed}
+.badge{display:inline-block;font-size:13px;font-weight:900;border-radius:999px;padding:4px 12px;margin:0 0 8px}
+.badge.std{background:#f5c542;color:#2a1260}
+.badge.ai{background:#c45bd8;color:#fff}
+.fbnote{background:#fff4d6;border:2px solid #f5c542;color:#5a3a00;border-radius:12px;padding:8px 12px;font-size:14px;font-weight:700;margin:0 0 10px;line-height:1.5}
+.errmini{font-size:11px;color:#9a8cc8;margin-top:6px;word-break:break-all}
 /* ===== footer ===== */
 .tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .ver{text-align:center;font-size:12px;color:var(--sub);margin-top:16px;opacity:.85}
@@ -243,6 +259,13 @@ body.isoff .offline{display:block}
     <div class="stage">
       <div class="bubble" id="bubInput"></div>
       <img class="shi small" id="shiInput" src="shi-normal.png" alt="">
+    </div>
+    <div class="panel">
+      <div class="lbl"><span data-i18n="qMode"></span></div>
+      <div class="modes">
+        <button type="button" class="mode" id="mStd"><b data-i18n="modeStd"></b><small data-i18n="modeStdS"></small></button>
+        <button type="button" class="mode ai" id="mAi"><b data-i18n="modeAi"></b><small id="mAiS"></small></button>
+      </div>
     </div>
     <div class="panel">
       <div class="lbl"><span data-i18n="qGenre"></span><span class="req" data-i18n="required"></span></div>
@@ -312,7 +335,7 @@ body.isoff .offline{display:block}
 <script>
 (()=>{
 "use strict";
-const APP_VERSION="1.0.5";
+const APP_VERSION="1.0.6";
 const PROXY="https://tarot-proxy.e46-toshi-1124.workers.dev";
 const INSTA="https://www.instagram.com/mirateria.project/";
 const LANG=((navigator.languages&&navigator.languages[0])||navigator.language||"ja").toLowerCase().startsWith("ja")?"ja":"en";
@@ -332,8 +355,13 @@ ja:{title:"しーちゃんのタロット占い",subtitle:"ケルト十字で、
  qGenre:"何を占う？",qGender:"性別",qAge:"年代",qName:"呼び名（ハンネ）",qFree:"相談したいこと",required:"必須",optional:"なくてもOK",
  nameNote:"呼び名はこのスマホの中だけで使います。AIには送りません。",
  back:"← もどる",next:"カードを選ぶ →",reshuffle:"🔀 混ぜ直す",saveImg:"🖼 画面全体を画像で保存",again:"🔮 もう一度",toTop:"🏠 トップへ",retry:"🔁 もう一度読んでもらう",
- offline:"📡 いまネットにつながっていません。つながると占えます（これまでの結果は見られます）",
- privacy:"このアプリは、名前・住所・電話番号などの個人情報を集めません。占いのために「選んだカードと相談の内容」だけをAIに送ります。",
+ offline:"📡 ネットにつながっていません。ふつう占いはこのまま使えます（AIはつながると使えます）",
+ qMode:"占い方",modeStd:"📖 ふつう",modeStdS:"何回でもOK\n通信なしでもOK",modeAi:"🔮 AIでじっくり",modeAiS:"相談内容を読んで答える\n1日1回",modeAiUsed:"今日は使ったよ\nまた明日ね",modeAiOff:"ネットにつながると\n使えるよ",
+ howTitle:"占い方は2つ",howBody:"<b>📖 ふつう</b>：カードの意味を組み合わせて読みます。何回でもOK。通信なしでも使えます。<br><br><b>🔮 AIでじっくり</b>：書いた相談内容も読んで答えます。1日1回。<br><br>占う前に、好きな方を選んでね。",howOk:"わかった！",
+ badgeStd:"📖 ふつう占い",badgeAi:"🔮 AIでじっくり",
+ fallback:"AIが混み合っていたので、ふつう占いで読んだよ。AIは今日まだ使えるよ。",
+ stdThink:"カードを読んでるよ…",
+ privacy:"このアプリは、名前・住所・電話番号などの個人情報を集めません。「AIでじっくり」を選んだ時だけ、「選んだカードと相談の内容」をAIに送ります。",
  tapClose:"（タップで閉じる）",
  greet:["いらっしゃい…水晶玉がキラキラしてるよ✨","今日はどんなことを占う？","カードがあなたを待ってるよ🔮","深〜く読んであげるね"],
  greetName:n=>`${n}さん、いらっしゃい✨ 今日は何を占う？`,
@@ -361,7 +389,7 @@ ja:{title:"しーちゃんのタロット占い",subtitle:"ケルト十字で、
  histTitle:"これまでの結果",histEmpty:"まだ占った結果はないよ",
  homeTitle:"ホーム画面に追加する方法",homeAndroid:"Androidの人は「Chrome」で開いてね",
  aboutTitle:"このアプリについて",
- aboutBody:"しーちゃんが、ケルト十字（10枚）であなたの悩みを深く読みます。<br>・占いの結果はAI（Google Gemini）が作ります。<br>・名前や住所は送りません。<br>・結果はこのスマホの中にだけ保存されます。<br>・占いには通信が必要です。<br>・占いは楽しみのためのものです。大切なことは、身近な人や専門の人にも相談してね。",
+ aboutBody:"しーちゃんが、ケルト十字（10枚）であなたの悩みを深く読みます。<br>・📖ふつう：アプリの文章で読みます。何回でもOK、通信なしでも使えます。<br>・🔮AIでじっくり：AI（Google Gemini）が相談内容も読んで答えます。1日1回、通信が必要です。<br>・名前や住所は送りません。<br>・結果はこのスマホの中にだけ保存されます。<br>・占いは楽しみのためのものです。大切なことは、身近な人や専門の人にも相談してね。",
  shopTitle:"ミラテリアで販売中！",shopBody:"仲間が手作りしている魔除けのキーホルダー「サン」です。色いろいろ、文字チャームも選べます。",shopBtn:"📷 Instagramで見る",
  thanks100:"いつも使ってくれてありがとう！ よかったら感想を聞かせてね。これからの改良に使わせてもらうよ",
  rev:"逆位置",up:"正位置",mood:"しーちゃんのひとこと",
@@ -377,8 +405,13 @@ en:{title:"Shi-chan's Tarot",subtitle:"A deep Celtic Cross reading of your true 
  qGenre:"What shall we read?",qGender:"Gender",qAge:"Age",qName:"Nickname",qFree:"Your question",required:"Required",optional:"Optional",
  nameNote:"Your nickname stays on this phone only. It is never sent to the AI.",
  back:"← Back",next:"Choose cards →",reshuffle:"🔀 Reshuffle",saveImg:"🖼 Save whole screen as image",again:"🔮 Read again",toTop:"🏠 Top",retry:"🔁 Try the reading again",
- offline:"📡 You are offline. Readings need a connection (past readings are still available).",
- privacy:"This app does not collect personal information such as your name, address or phone number. Only your chosen cards and your question are sent to the AI for the reading.",
+ offline:"📡 You are offline. Standard readings still work (AI needs a connection).",
+ qMode:"Reading type",modeStd:"📖 Standard",modeStdS:"Unlimited\nWorks offline",modeAi:"🔮 AI deep reading",modeAiS:"Reads your question\nOnce a day",modeAiUsed:"Used today\nSee you tomorrow",modeAiOff:"Available when\nonline",
+ howTitle:"Two ways to read",howBody:"<b>📖 Standard</b>: combines the card meanings. Unlimited, works offline.<br><br><b>🔮 AI deep reading</b>: also reads your question. Once a day.<br><br>Choose whichever you like before each reading.",howOk:"Got it!",
+ badgeStd:"📖 Standard reading",badgeAi:"🔮 AI deep reading",
+ fallback:"The AI was busy, so I gave you a standard reading. You can still use AI today.",
+ stdThink:"Reading the cards…",
+ privacy:"This app does not collect personal information such as your name, address or phone number. Only when you choose AI deep reading are your chosen cards and question sent to the AI.",
  tapClose:"(Tap to close)",
  greet:["Welcome… my crystal ball is sparkling ✨","What shall we read today?","The cards are waiting for you 🔮","I'll read deep into your heart"],
  greetName:n=>`Welcome, ${n} ✨ What shall we read today?`,
@@ -406,7 +439,7 @@ en:{title:"Shi-chan's Tarot",subtitle:"A deep Celtic Cross reading of your true 
  histTitle:"Past readings",histEmpty:"No readings yet",
  homeTitle:"How to add to your Home Screen",homeAndroid:"On Android, please open this in Chrome",
  aboutTitle:"About this app",
- aboutBody:"Shi-chan reads your question with a 10-card Celtic Cross.<br>・Readings are written by AI (Google Gemini).<br>・Your name and address are never sent.<br>・Results are saved only on this phone.<br>・Readings need an internet connection.<br>・Tarot is for fun. For important matters, please also talk to people you trust or professionals.",
+ aboutBody:"Shi-chan reads your question with a 10-card Celtic Cross.<br>・📖 Standard: written by the app. Unlimited, works offline.<br>・🔮 AI deep reading: AI (Google Gemini) also reads your question. Once a day, needs a connection.<br>・Your name and address are never sent.<br>・Results are saved only on this phone.<br>・Tarot is for fun. For important matters, please also talk to people you trust or professionals.",
  shopTitle:"On sale at MIRATERIA!",shopBody:"Handmade good-luck charms “San” made by our team. Many colors and letter charms available.",shopBtn:"📷 See on Instagram",
  thanks100:"Thank you for always using this app! We'd love to hear your thoughts to make it better.",
  rev:"Reversed",up:"Upright",mood:"Shi-chan says",
@@ -471,14 +504,33 @@ const sfx={
   talk(){tone(600+Math.random()*500,.05,"sine",.05)},
   boing(){tone(300,.25,"sine",.12,0,700)},
   bell(){tone(1760,.5,"sine",.07);tone(2637,.4,"sine",.04,.02)},
-  ng(){tone(220,.18,"square",.06)}
+  ng(){tone(220,.18,"square",.06)},
+  pon(){tone(880,.09,"sine",.13,0,520);tone(1760,.05,"sine",.04,.01)},
+  pata(){noise(.07,.16,2600,"highpass");tone(180,.08,"sine",.12,0,90)},
+  shara(){for(let i=0;i<9;i++)noise(.06,.07,4500+Math.random()*2500,"bandpass",i*.11)},
+  hyuu(){const a=ac();if(!a)return;const t=a.currentTime;const o=a.createOscillator(),g=a.createGain(),l=a.createOscillator(),lg=a.createGain();
+    o.type="sine";o.frequency.setValueAtTime(1300,t);o.frequency.exponentialRampToValueAtTime(260,t+.75);
+    l.frequency.value=9;lg.gain.value=25;l.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.07,t+.08);g.gain.exponentialRampToValueAtTime(.0001,t+.8);
+    o.connect(g).connect(a.destination);o.start(t);l.start(t);o.stop(t+.85);l.stop(t+.85)},
+  powaan(){const a=ac();if(!a)return;const t=a.currentTime;[[392,0],[493.9,.15],[587.3,.3],[784,.45]].forEach(([f,d])=>{const o=a.createOscillator(),g=a.createGain();
+    o.type="sine";o.frequency.value=f*(1+(Math.random()-.5)*.004);g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.035,t+d+.5);g.gain.exponentialRampToValueAtTime(.0001,t+d+2.2);
+    o.connect(g).connect(a.destination);o.start(t+d);o.stop(t+d+2.3)})},
+  giku(){tone(320,.07,"square",.06,0,900);tone(900,.12,"triangle",.06,.08,420)},
+  kiran(){[1568,2093,2637,3136].forEach((f,i)=>tone(f,.5,"sine",.06,i*.06));noise(.4,.03,7000,"highpass",.05)}
 };
+let NB=null;
+function noise(d,v,freq,type,when=0){const a=ac();if(!a)return;
+  if(!NB){NB=a.createBuffer(1,a.sampleRate*1,a.sampleRate);const ch=NB.getChannelData(0);for(let i=0;i<ch.length;i++)ch[i]=Math.random()*2-1}
+  const t=a.currentTime+when;const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();
+  s.buffer=NB;f.type=type||"bandpass";f.frequency.value=freq||3000;f.Q.value=.8;
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(f).connect(g).connect(a.destination);s.start(t,Math.random()*.5);s.stop(t+d+.02)}
 const FUNC="button,.chip,.back,.kh,.bannerbox,.hitem,.face,.shi";
 document.addEventListener("touchstart",()=>{},{passive:true});
 document.addEventListener("pointerdown",e=>{
   const el=e.target.closest(FUNC);if(!el||el.disabled)return;
   el.classList.add("press");
-  if(!el.matches(".shi,.kh,.back.taken"))sfx.pip();
+  if(!el.matches(".shi,.kh,.back"))sfx.pip();
   const up=()=>{el.classList.remove("press");window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",up)};
   window.addEventListener("pointerup",up);window.addEventListener("pointercancel",up);
 },true);
@@ -507,7 +559,7 @@ function say(bubId,imgId,text,face="normal",html=false){
 function setFace(imgId,face){$(imgId).src=FACES[face]||FACES.normal}
 
 /* ---------- state + autosave ---------- */
-const state=Object.assign({screen:"scHome",genre:null,gender:null,age:null,name:"",free:"",picked:[],deckOrder:null,reading:null},store.get("state",{}));
+const state=Object.assign({screen:"scHome",mode:"std",genre:null,gender:null,age:null,name:"",free:"",picked:[],deckOrder:null,reading:null},store.get("state",{}));
 function saveState(){store.set("state",state)}
 ["pagehide","beforeunload"].forEach(ev=>window.addEventListener(ev,saveState));
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveState();else if(reading&&readCtrl&&Date.now()-readStart>READ_CAP){try{readCtrl.abort()}catch(e){}}});
@@ -616,7 +668,20 @@ function chips(boxId,items,key,single=true){
   items.forEach(([v,l])=>{const c=document.createElement("button");c.type="button";c.className="chip"+(state[key]===v?" on":"");c.textContent=l;
     c.addEventListener("click",()=>{state[key]=(state[key]===v&&key!=="genre")?null:v;saveState();chips(boxId,items,key)});box.appendChild(c)});
 }
+/* ---------- 占い方（ふつう / AI 1日1回） ---------- */
+function today(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
+function aiUsedToday(){return store.get("aiDay","")===today()}
+function aiAvailable(){return !aiUsedToday()&&navigator.onLine}
+function drawModes(){
+  if(state.mode==="ai"&&!aiAvailable())state.mode="std";
+  $("mStd").classList.toggle("on",state.mode!=="ai");$("mAi").classList.toggle("on",state.mode==="ai");
+  $("mAi").disabled=!aiAvailable();
+  $("mAiS").textContent=aiUsedToday()?T.modeAiUsed:!navigator.onLine?T.modeAiOff:T.modeAiS;
+}
+$("mStd").addEventListener("click",()=>{state.mode="std";saveState();drawModes()});
+$("mAi").addEventListener("click",()=>{if(!aiAvailable())return;state.mode="ai";saveState();drawModes()});
 function inputEnter(){
+  drawModes();
   chips("chGenre",T.genres,"genre");chips("chGender",T.genders,"gender");chips("chAge",T.ages,"age");
   $("inName").value=state.name||"";$("inFree").value=state.free||"";checkFree();
   say("bubInput","shiInput",T.inputBub,"normal");
@@ -641,16 +706,16 @@ function startPick(fresh){
     b.addEventListener("click",()=>pickCard(pos,ci,b));deck.appendChild(b)});
   updCount();
   if(fresh){deck.classList.add("shuffle");say("bubPick","shiPick",T.shuffling,"serious");
-    [0,.5,1].forEach(t=>setTimeout(sfx.flip,t*500));
+    sfx.shara();setTimeout(sfx.shara,550);setTimeout(sfx.shara,1100);
     setTimeout(()=>{deck.classList.remove("shuffle");say("bubPick","shiPick",T.pickBub,"serious")},1600);}
   else say("bubPick","shiPick",T.pickBub,"serious");
 }
 function updCount(){$("pickCount").innerHTML=T.pickCount(state.picked.length)}
 function pickCard(pos,ci,el){
   if(state.picked.length>=10)return;
-  el.classList.add("taken");sfx.flip();
+  el.classList.add("taken");sfx.pon();
   state.picked.push({pos,ci,rev:Math.random()<.35});saveState();updCount();
-  if(state.picked.length===10){sfx.sparkle();setTimeout(()=>{show("scRead");startReading()},600)}
+  if(state.picked.length===10){sfx.kiran();setTimeout(()=>{show("scRead");startReading()},600)}
 }
 $("reshuffle").addEventListener("click",()=>startPick(true));
 
@@ -669,6 +734,485 @@ function buildSpread(open){
     if(open)s.classList.add("open");sp.appendChild(s);
   });
   $("cardlist").innerHTML=state.picked.map((p,i)=>`<div><b>${T.posShort[i]}</b>　${escapeHTML(cname(CARDS[p.ci]))}${p.rev?` <span class="rev">（${T.rev}）</span>`:""}</div>`).join("");
+}
+
+/* ===== ふつう占い（アプリの文章・通信なしで動く） ===== */
+/* カードごとの意味：[正位置の様子, 逆位置の様子, 正位置のアドバイス, 逆位置のアドバイス] */
+const D_JA=[
+["何にも縛られず、新しい世界へ飛び込もうとしている","勢いだけで動いて、足元が見えにくくなっている","計算しすぎず、ワクワクする方へ一歩踏み出してみて","飛び込む前に、ひと呼吸おいて足元を確かめてみて"],
+["必要な道具も才能も、もう手の中にそろっている","力はあるのに、使い方や向ける先が定まっていない","自分の力を信じて、まず形にしてみて","器用さに頼りすぎず、本当にやりたいことを一つに絞って"],
+["静かな直感が、答えをすでに知っている","心の声を聞かずに、頭だけで判断しようとしている","静かな時間をとって、心の奥の声に耳をすませて","考えすぎをやめて、自分の本音を正直に認めて"],
+["愛情と豊かさが、ゆっくりと実を結ぼうとしている","与えすぎたり甘えすぎたりして、バランスが崩れている","自分を大切にして、心地よいものに囲まれてみて","人のためだけでなく、自分の心と体も満たしてあげて"],
+["しっかりした土台と責任感で、物事を動かす力がある","意地やプライドが強くなり、柔らかさを失いかけている","目標をはっきり決めて、計画どおりに進めてみて","全部をひとりで抱えこまず、まわりに任せることも覚えて"],
+["信頼できる教えや、昔からのやり方が支えになる","決まりごとや常識に、心が窮屈になっている","信頼できる人に相談して、助言を素直に受け取ってみて","「普通はこう」にとらわれず、自分に合うやり方を選んで"],
+["心から惹かれるものとの出会いや、大切な選択がある","迷いや誘惑で、気持ちがゆれ動いている","損得より「本当に好きかどうか」で選んでみて","決める前に、自分が何を大切にしたいかを整理して"],
+["強い意志で、困難を突き破って前進できる","気持ちが先走って、方向がぶれやすくなっている","迷わずゴールを見すえて、一気に進んでみて","スピードを落として、ハンドルを握り直して"],
+["やさしさと忍耐で、大きな力をおだやかに扱える","自信がゆらいで、自分の力を信じきれていない","力でねじ伏せず、やさしく根気よく向き合ってみて","できている自分を認めて、自信を少しずつ取り戻して"],
+["ひとりで深く考えることで、本当の答えが見えてくる","心を閉ざして、孤独の中に閉じこもりがちになっている","少しひとりの時間をとって、自分と向き合ってみて","閉じこもらず、信頼できる人に少しだけ心を開いて"],
+["運命の流れが大きく動き、チャンスがめぐってくる","タイミングがずれて、流れに乗りきれていない","流れが来たら、迷わず乗ってみて","今は無理に動かず、次の波を待つ準備をして"],
+["公平な判断と、正しいバランスが求められている","不公平さや、どちらかに偏った見方が混じっている","感情と事実を分けて、冷静に判断してみて","自分にも相手にも、正直で公平かどうか見直して"],
+["立ち止まって見方を変えることで、新しい意味が見えてくる","我慢や犠牲が、報われない形で続いている","急がず、いつもと逆の立場から眺めてみて","意味のない我慢は手放して、動ける所から動いて"],
+["ひとつの章が終わり、新しく生まれ変わる時が来ている","終わらせるべきものを、なかなか手放せずにいる","終わったものに感謝して、新しい扉を開いてみて","怖がらずに、古いものを少しずつ手放して"],
+["異なるものがうまく混ざり合い、おだやかな調和が生まれる","ペースが乱れて、心と体のバランスが崩れている","極端に走らず、ちょうどいい加減を探してみて","生活のリズムを整えて、無理のないペースに戻して"],
+["強い欲や執着が、心をしばりつけている","しばっていた鎖から、ようやく抜け出し始めている","「やめられない」ものの正体を、正直に見つめてみて","その解放の流れを大切に、もう一歩離れてみて"],
+["思いがけない出来事で、古い形が崩れて目が覚める","崩れそうなものを、無理に支えようとしている","崩れたあとに残る、本当に大事なものを見つめて","小さな変化のうちに受け入れて、大きく崩れる前に手を打って"],
+["希望の光がさし、未来への願いがかないそうな流れがある","希望を見失いかけて、自信がなくなっている","遠くても理想を思い描いて、信じて進んでみて","小さな「うれしい」を数えて、希望の灯を取り戻して"],
+["はっきりしない不安や、見えない迷いの中にいる","もやが晴れて、隠れていたものが見えてくる","不安な時は決めつけず、時間をかけて確かめてみて","見えてきた真実を受け止めて、落ち着いて進んで"],
+["明るい喜びと成功の光に包まれている","元気が少し陰っているけれど、光はちゃんとそこにある","素直に喜んで、そのまぶしさを周りにも分けてあげて","完璧を求めず、小さな成功を自分でほめてあげて"],
+["呼び声にこたえて、もう一度立ち上がる時が来ている","過去へのこだわりで、新しい呼びかけに気づけていない","昔あきらめた夢を、もう一度見直してみて","自分を責めるのをやめて、過去を許してあげて"],
+["ひとつの物語が完成し、満ち足りた到達点にいる","あと少しのところで、仕上げが足りていない","ここまでの自分を認めて、次の大きな旅を思い描いてみて","最後のひと押しを丁寧にして、きちんと締めくくって"],
+// ワンド
+["新しい情熱が燃え上がり、何かを始めるエネルギーに満ちている","やる気が空回りして、火がつきそうでつかない","思いついたことを、熱いうちに始めてみて","焦らず、まず小さな火種を大事に育てて"],
+["次の一歩をどこへ向けるか、広い視野で計画している","計画ばかりで、外へ踏み出せずにいる","遠くまで見渡して、大きな地図を描いてみて","考えるのは十分。そろそろ一歩外へ出て"],
+["まいた種が広がり始め、その先に可能性が見えている","期待した結果がなかなか届かず、もどかしい","視野を広げて、もっと遠くのチャンスに目を向けて","待つ間に、計画を少し修正してみて"],
+["安心できる居場所と、お祝いしたくなる喜びがある","落ち着ける場所が、少しゆらいでいる","身近な人と、小さなお祝いをしてみて","足元の人間関係や暮らしを整え直して"],
+["意見のぶつかり合いや、競い合いの中にいる","争いが長引いて、疲れがたまっている","ぶつかり合いを、成長のための練習と考えてみて","勝ち負けより、話し合いで落としどころを探して"],
+["がんばりが認められ、勝利や評価を手にしている","評価を気にしすぎたり、自信が崩れたりしている","胸を張って、その成果を受け取って","人の目より、自分で納得できるかを大切にして"],
+["自分の立場を守るため、ひとりで踏ん張っている","守りに疲れて、くじけそうになっている","信じることは、ゆずらずに守り抜いて","全部と戦わず、本当に守るべきものを選んで"],
+["物事が一気に動き出し、知らせやスピードがやってくる","予定が遅れたり、急ぎすぎて空回りしたりしている","チャンスはすぐにつかんで、素早く動いてみて","焦って突っ走らず、タイミングを見直して"],
+["何度も傷つきながらも、最後の守りを固めている","疲れと警戒心で、心がかたくなになっている","あと少しだから、気を抜かずに踏ん張って","ひとりで構えすぎず、休むことも大事にして"],
+["たくさんの責任や重荷を、ひとりで抱えている","背負いすぎて、限界が近づいている","抱えているものを、一度ぜんぶ書き出してみて","手放せるもの、人に頼めるものを今すぐ降ろして"],
+["ワクワクする新しい知らせや、好奇心の芽がある","興味が続かず、気持ちがあちこちに散っている","気になったことに、まず気軽に挑戦してみて","始めたことを一つだけ、最後までやってみて"],
+["情熱のままに、勢いよく飛び出していく","気が短くなって、勢いがトラブルを招きやすい","熱い気持ちのまま、行動に移してみて","突っ走る前に、相手や周りの様子を見て"],
+["明るく堂々とした魅力で、周りを引きつけている","自信のなさや、嫉妬の気持ちがのぞいている","自分らしさを隠さず、堂々とふるまってみて","人と比べず、自分の良さを思い出して"],
+["大きなビジョンで人を引っぱる、リーダーの力がある","強引さやワンマンさが、反発を生みやすい","大きな目標を掲げて、先頭に立ってみて","力で押さず、周りの声にも耳を傾けて"],
+// カップ
+["心があふれるような、新しい愛情や感動が生まれる","気持ちにふたをして、素直に感じられずにいる","あふれる気持ちを、素直に受け取ってみて","押しこめた気持ちを、少しずつ言葉にしてみて"],
+["心が通じ合う、対等であたたかい関係がある","気持ちのすれ違いや、バランスのくずれがある","相手と気持ちを分かち合う時間をつくって","誤解をそのままにせず、素直に話し合って"],
+["仲間との楽しい時間や、喜びの分かち合いがある","楽しさに流されたり、人間関係にすき間が生まれたりしている","気の合う人と、一緒に喜びを分かち合って","付き合いの量より、大切な人との時間の質を見直して"],
+["今あるものに満足できず、心が退屈している","閉じていた心が、ようやく新しいものに目を向け始めている","ないものより、差し出されているものに目を向けて","その小さな興味を、大事に追いかけてみて"],
+["失ったものに心を奪われ、悲しみの中にいる","悲しみから少しずつ立ち直り始めている","悲しみは無理に消さず、残っているものも見つめて","前を向く力を信じて、ゆっくり歩き出して"],
+["なつかしい思い出や、純粋なやさしさがよみがえる","過去にとらわれて、今に目が向きにくい","子どものころのような素直な気持ちを思い出して","思い出は大切にしつつ、今の自分に目を向けて"],
+["たくさんの夢や選択肢に、気持ちがふわふわしている","夢から覚めて、現実的な選択ができ始めている","夢を一つに絞って、現実的な一歩を考えてみて","見えてきた現実を味方にして、選んだ道を進んで"],
+["今あるものを置いて、心が求める何かを探しに行こうとしている","去るべきか残るべきか、迷いの中にいる","心が満たされないなら、勇気を出して次へ向かって","離れる理由と残る理由を、紙に書いて比べて"],
+["願いがかない、心から満足できる状態にある","満足が一時的で、心の奥では物足りなさがある","叶った願いを、素直に味わって","本当に欲しいものは何か、もう一度問い直して"],
+["家族や大切な人との、あたたかい幸せに包まれている","理想の幸せと現実の間に、ずれを感じている","身近な人に、感謝の気持ちを伝えてみて","完璧な形を求めず、今ある幸せを見つけて"],
+["やさしい気持ちや、うれしい知らせが届く","気分が不安定で、傷つきやすくなっている","ふと浮かんだ気持ちやアイデアを大切にして","感情にふり回されず、ひと晩おいてから決めて"],
+["ロマンチックな申し出や、心をこめた提案がやってくる","理想ばかりで、現実味がとぼしくなっている","気持ちをまっすぐに伝えてみて","甘い言葉だけでなく、行動も見て判断して"],
+["深い思いやりと共感で、人の心に寄りそっている","人の気持ちを背負いすぎて、自分が疲れている","自分の直感とやさしさを信じて","人の感情と自分の感情を、分けて考えて"],
+["感情に流されず、おだやかに受け止める大人の包容力がある","気持ちをおさえこんだり、気分で人を振り回したりしている","落ち着いた心で、相手を受け止めてあげて","気持ちを我慢しすぎず、信頼できる人に話して"],
+// ソード
+["迷いを断ち切る、はっきりした考えや決断が生まれる","考えがまとまらず、判断がにぶっている","本当の気持ちを、はっきり言葉にしてみて","決める前に、情報をもう一度整理して"],
+["決められないまま、心にふたをしている","止めていた決断が、ようやく動き出そうとしている","目をそらさず、本当の気持ちを確かめてみて","決めたことを、少しずつ行動にうつして"],
+["心が痛むような悲しみや、傷ついた経験がある","傷が少しずつ癒え始めている","痛みを無理にごまかさず、泣きたい時は泣いて","癒えていく自分を、やさしく見守って"],
+["心と体が休息を求めていて、立ち止まる時が来ている","休みが終わり、再び動き出す時が近づいている","思い切って休んで、心を充電してみて","ゆっくりでいいから、少しずつ動き出して"],
+["勝っても心がすっきりしない、気まずい争いがある","争いのあとの後悔や、関係修復のきざしがある","勝ち負けにこだわらず、引くことも考えてみて","意地をはらず、ひと言あやまってみて"],
+["苦しい場所を離れ、おだやかな方へ移っていく","抜け出したいのに、なかなか離れられずにいる","つらい場所からは、静かに距離をとってみて","少しずつでいいから、出口の方へ進んで"],
+["正面からではなく、作戦や駆け引きが動いている","隠しごとが表に出たり、作戦が裏目に出たりしやすい","頭を使って、うまく立ち回る方法を考えて","ごまかさず、正直に向き合う方がうまくいくよ。素直に話して"],
+["思いこみや不安で、自分をしばってしまっている","心のしばりがほどけ、自由になり始めている","「できない」と思っていることを疑ってみて","ほどけた心で、新しい一歩を選んで"],
+["夜も眠れないほど、心配ごとが頭をはなれない","不安のピークを越え、少しずつ落ち着き始めている","不安を紙に書き出して、一つずつ整理して","ひとりで抱えず、誰かに話して心を軽くして"],
+["どん底まで落ちて、これ以上悪くならない地点にいる","最悪の時期を抜け、回復が始まっている","終わったことは終わったと認めて、夜明けを待って","立ち直る力を信じて、ゆっくり起き上がって"],
+["好奇心が強く、情報を集めて様子をうかがっている","うわさや言葉の行き違いに、ふり回されやすい","よく観察して、情報をしっかり集めて","言葉を選び、うわさを信じこまないで"],
+["目標に向かって、迷いなく一直線に突き進んでいる","急ぎすぎて、言葉や行動がとがりやすい","ためらわず、思いきって動いてみて","言葉がきつくなっていないか、一度ふり返って"],
+["鋭い判断力と、自立した強さを持っている","厳しさが行きすぎて、冷たく見られやすい","感情に流されず、筋の通った判断をして","正しさだけでなく、やさしさも少し添えて"],
+["冷静な知性と公平さで、物事を正しく判断できる","理屈が先に立ち、人の気持ちを置き去りにしやすい","事実をもとに、ぶれない決断をしてみて","頭で正しくても、相手の気持ちも考えて"],
+// ペンタクル
+["お金や仕事、体の面で、確かな恵みの種が手に入る","チャンスを見のがしたり、計画が甘くなったりしている","目の前の現実的なチャンスを、しっかりつかんで","浮かれず、足元の計画を見直して"],
+["いくつものことを、器用にやりくりしている","やることが多すぎて、バランスがくずれかけている","楽しみながら、うまく両立させてみて","優先順位を決めて、抱えすぎを減らして"],
+["技術や努力が認められ、協力して形にしていける","チームワークがかみ合わず、力が出しきれていない","人と協力して、自分の腕をみがいて","役割をはっきりさせて、話し合いを大事にして"],
+["手に入れたものを、しっかり守ろうとしている","守りすぎて、ケチになったり心が閉じたりしている","大切なものは、しっかり守って","少しゆるめて、分け合う喜びも味わって"],
+["お金や体、心細さなど、苦しい状況にいる","苦しい時期を抜け、助けの手が見え始めている","困った時は、遠慮せず助けを求めて","差しのべられた手を、素直に取って"],
+["与えることと受け取ることが、うまく回っている","与える・受け取るのバランスがかたよっている","余裕があれば、誰かに分けてあげて","一方的な関係になっていないか見直して"],
+["これまでの努力をふり返り、実りを待っている","がんばっても成果が見えず、焦っている","結果を急がず、育ち具合を確かめて","やり方を少し変えて、もう一度種をまいて"],
+["コツコツと腕をみがき、確かな力を身につけている","単調さにあきたり、こだわりすぎたりしている","毎日の小さな積み重ねを続けて","完璧にこだわりすぎず、楽しみも見つけて"],
+["自分の力で手にした、ゆとりと豊かさがある","見た目の豊かさにこだわったり、人に頼りすぎたりしている","がんばった自分へのごほうびを楽しんで","人に頼りきらず、自分の足で立つ力を大切に"],
+["家族や長く続く豊かさ、しっかりした基盤がある","家族やお金のことで、ゆらぎや問題がある","長い目で、未来の土台を築いて","家族や身近な人と、お金や将来のことを話し合って"],
+["学ぶ意欲が高く、現実的な目標に向けて準備している","やる気が続かず、計画が進まずにいる","新しいことを、一歩ずつ学び始めて","目標を小さく分けて、今日できることから始めて"],
+["ゆっくりでも、着実に前へ進んでいる","慎重すぎて、動きが止まりかけている","あわてず、決めたことをコツコツ続けて","たまには思い切って、小さな変化を入れて"],
+["現実的な知恵と、あたたかい思いやりで暮らしを豊かにしている","心配しすぎや、物への執着が強くなっている","体と暮らしを大切にして、自分を満たして","心配ごとより、今ある豊かさに目を向けて"],
+["経験と実力で、安定と豊かさをつかんでいる","お金や地位にこだわりすぎて、心がかたくなっている","これまでの経験を信じて、どっしり構えて","数字や結果だけでなく、人の気持ちも大切に"]
+];
+const D_EN=[
+["you are ready to leap into something new, free of old ties","you may be rushing ahead without watching your step","step toward what excites you, without overthinking","take a breath and check your footing before you leap"],
+["you already hold every tool and talent you need","your power is there, but its direction is scattered","trust your skill and start making it real","don't lean on cleverness alone; focus on the one thing you truly want"],
+["your quiet intuition already knows the answer","you are ignoring your inner voice and thinking only with your head","make quiet time and listen to the voice deep inside","stop overthinking and admit what you truly feel"],
+["love and abundance are slowly coming to fruit","giving or indulging too much is upsetting the balance","treat yourself kindly and surround yourself with comfort","nourish your own heart and body, not only others'"],
+["you have the solid ground and responsibility to make things happen","pride and stubbornness are making you rigid","set a clear goal and follow your plan","don't carry everything alone; let others help"],
+["trusted teachings and tried-and-true ways will support you","rules and \"common sense\" are making you feel cramped","talk to someone you trust and take their advice openly","don't be bound by \"how it's usually done\"; choose what suits you"],
+["there is a heartfelt connection or an important choice","doubt or temptation is making your heart waver","choose by what you truly love, not by gain or loss","before deciding, sort out what you really value"],
+["strong will lets you break through and move forward","your feelings are racing ahead and your direction wobbles","fix your eyes on the goal and charge ahead","slow down and get a firm grip on the wheel again"],
+["gentleness and patience let you tame great power calmly","your confidence is shaken and you doubt your own strength","face it softly and patiently instead of forcing it","acknowledge what you already do well and rebuild your confidence"],
+["deep solitary reflection reveals the real answer","you are shutting yourself away in loneliness","take some time alone and face yourself honestly","don't hide away; open up a little to someone you trust"],
+["the wheel of fate is turning and a chance is coming round","your timing is off and you can't catch the flow","when the wave comes, ride it without hesitation","don't force it now; prepare for the next wave"],
+["fair judgment and true balance are called for","unfairness or a one-sided view has crept in","separate feelings from facts and decide calmly","check whether you are being honest and fair to both sides"],
+["pausing and changing your viewpoint reveals new meaning","endurance and sacrifice continue without reward","don't rush; look at it from the opposite side","let go of pointless endurance and move where you can"],
+["one chapter ends and a time of rebirth arrives","you are struggling to let go of what should end","thank what has ended and open a new door","don't be afraid; release the old little by little"],
+["different things blend well and gentle harmony is born","your pace is off and body and mind are out of balance","avoid extremes and look for the happy medium","reset your daily rhythm and return to an easy pace"],
+["strong desire or attachment is binding your heart","you are finally beginning to break free of your chains","look honestly at what you \"can't quit\"","honor this release and step one pace further away"],
+["a sudden event shakes old structures and wakes you up","you are straining to hold up something that wants to fall","look at what truly matters among what remains","accept small changes now, before a big collapse"],
+["a light of hope shines and your wish for the future may come true","you are losing sight of hope and confidence","picture your ideal, however distant, and keep going","count small joys and rekindle your light of hope"],
+["you are in vague anxiety and unseen confusion","the fog is lifting and hidden things come to light","when anxious, don't jump to conclusions; take time to check","accept the truth now visible and move on calmly"],
+["you are bathed in bright joy and success","your energy is a little clouded, but the light is still there","enjoy it openly and share that brightness with others","don't demand perfection; praise yourself for small wins"],
+["a call has come and it is time to rise again","clinging to the past keeps you from hearing a new call","revisit a dream you once gave up","stop blaming yourself and forgive the past"],
+["a story is complete and you have reached fulfillment","you are close, but the finishing touch is missing","honor how far you've come and imagine your next journey","give the last push carefully and close the circle properly"],
+["fresh passion flares up, full of energy to begin","your drive is spinning without catching fire","start your idea while it's still hot","don't rush; nurse the small spark first"],
+["you are planning your next step with a wide view","you keep planning but can't step outside","look far ahead and draw a big map","you've thought enough; it's time to step out"],
+["what you sowed is spreading and possibilities are in view","the results you hoped for are slow to arrive","widen your view toward chances farther away","while you wait, adjust your plan a little"],
+["you have a safe place and joy worth celebrating","your place of comfort is a little shaky","celebrate something small with people close to you","tidy up your home life and close relationships"],
+["you are amid clashing opinions and competition","the struggle drags on and fatigue builds","treat the clash as practice that helps you grow","look for common ground through talk, not victory"],
+["your efforts are recognized and victory is in hand","you worry too much about praise, or your confidence is cracking","hold your head high and accept your success","value your own satisfaction over others' eyes"],
+["you are standing your ground alone","you are tired of defending and close to giving up","hold fast to what you believe in","don't fight everything; choose what's truly worth defending"],
+["things suddenly speed up and news arrives fast","there are delays, or you rush so much you spin your wheels","grab chances quickly and act fast","don't race blindly; recheck your timing"],
+["though wounded, you are holding your final line","exhaustion and wariness are hardening your heart","you're almost there, so hold on a little longer","don't stay on guard alone; rest matters too"],
+["you are carrying many responsibilities alone","you have taken on too much and are near your limit","write down everything you are carrying","put down what you can drop or hand over, right now"],
+["exciting news or a seed of curiosity appears","your interest won't last and your mind scatters","try what catches your eye, lightly at first","pick one thing you started and see it through"],
+["you dash forward, driven by passion","impatience makes your momentum cause trouble","turn your fire straight into action","before charging off, look at others and the situation"],
+["your bright, confident charm draws people in","insecurity or jealousy is showing","be yourself openly and carry yourself with pride","stop comparing and remember your own strengths"],
+["you have a leader's power to guide others with a big vision","forcefulness or bossiness may cause pushback","raise a big goal and lead from the front","don't push by force; listen to those around you"],
+["new love or deep emotion overflows in your heart","you are bottling up your feelings","welcome the overflowing feelings openly","put your bottled-up feelings into words, little by little"],
+["there is a warm, equal bond where hearts connect","feelings are crossing or the balance is off","make time to share feelings with each other","don't leave misunderstandings; talk honestly"],
+["joyful times and shared happiness with friends","you're carried away by fun, or gaps appear in your circle","share your joy with people you click with","value quality time with dear ones over quantity"],
+["you feel bored and unsatisfied with what you have","your closed heart is finally turning toward something new","notice what is being offered, not what's missing","follow that small spark of interest"],
+["your heart is held by loss and sadness","you are slowly recovering from sorrow","don't force the grief away; see what still remains","trust your strength to look ahead and walk slowly on"],
+["fond memories and innocent kindness return","the past holds you and it's hard to see the present","remember your childlike, honest heart","cherish memories, but turn your eyes to now"],
+["many dreams and options leave you floating","you are waking from fantasy and choosing realistically","narrow your dreams to one and plan a real step","use the reality you now see and walk your chosen path"],
+["you are leaving things behind to seek what your heart wants","you are torn between leaving and staying","if your heart is unfulfilled, bravely move on","write out reasons to go and to stay, and compare them"],
+["your wish comes true and you feel deeply satisfied","satisfaction is fleeting and deep down something's missing","savor the wish that came true","ask yourself again what you truly want"],
+["warm happiness with family and dear ones surrounds you","you feel a gap between ideal happiness and reality","tell those close to you that you're grateful","stop chasing a perfect picture; find the happiness here now"],
+["tender feelings or happy news arrive","your mood is unstable and you're easily hurt","treasure the feelings and ideas that come to you","don't be swept by emotion; sleep on it before deciding"],
+["a romantic offer or heartfelt proposal approaches","you are all ideals with little reality","express your feelings directly","judge by actions, not only sweet words"],
+["deep compassion lets you stand by others' hearts","carrying others' feelings has worn you out","trust your intuition and kindness","keep others' emotions separate from your own"],
+["you have mature calm that holds emotion without being swept away","you suppress your feelings or let moods sway others","receive others with a calm heart","don't hold everything in; talk to someone you trust"],
+["a clear idea or decision cuts through doubt","your thoughts are scattered and your judgment dulled","put your true feelings clearly into words","organize the facts again before deciding"],
+["you can't decide and have closed your heart","a stalled decision is finally starting to move","don't look away; check how you really feel","turn your decision into action, step by step"],
+["there is heartache or a painful experience","the wound is slowly beginning to heal","don't hide the pain; cry if you need to","watch over your healing self gently"],
+["body and mind need rest; it's time to pause","rest is ending and the time to move again is near","take a real break and recharge","start moving again slowly, bit by bit"],
+["a fight where even winning leaves you uneasy","there is regret after conflict, or signs of repair","don't cling to winning; consider stepping back","drop your pride and say sorry"],
+["you are moving from hardship toward calmer waters","you want out but can't seem to leave","quietly put distance between you and the painful place","move toward the exit, even slowly"],
+["strategy and tactics are at work rather than direct moves","secrets may come out or a plan may backfire","use your wits to find a clever way through","honesty will work better than dodging, so speak plainly"],
+["assumptions and fear are binding you","your mental bonds are loosening and you're becoming free","question what you believe you \"can't\" do","with your freed heart, choose a new step"],
+["worries keep you awake at night","the worst anxiety has passed and you're settling down","write your worries down and sort them one by one","don't carry it alone; talk and lighten your heart"],
+["you've hit bottom, and it can't get worse from here","the worst is over and recovery has begun","accept what's over and wait for dawn","trust your power to recover and rise slowly"],
+["you are curious, gathering information and watching","rumors or miscommunication may sway you","observe closely and gather information","choose your words and don't believe rumors blindly"],
+["you charge straight at your goal without hesitation","haste makes your words and actions sharp","move boldly without hesitating","check whether your words have become too harsh"],
+["you have sharp judgment and independent strength","your strictness may come across as cold","make clear, logical judgments without being swayed","add a little kindness to being right"],
+["calm intellect and fairness let you judge rightly","logic comes first and feelings get left behind","make a firm decision based on facts","even if you're logically right, consider their feelings"],
+["a real seed of reward comes in money, work or health","you may miss a chance or plan too loosely","grab the practical chance in front of you","don't get carried away; review your plan"],
+["you are juggling several things skillfully","there's too much to do and the balance is slipping","enjoy keeping things in balance","set priorities and carry less"],
+["your skill and effort are recognized; teamwork builds results","teamwork isn't meshing and you can't give your best","work with others and hone your craft","clarify roles and value discussion"],
+["you are holding tight to what you've gained","you hold so tight you've grown stingy or closed","protect what matters to you","loosen up and enjoy sharing a little"],
+["you face hardship in money, health or loneliness","the hard time is passing and help is coming into view","when in trouble, ask for help without hesitating","take the hand that is offered"],
+["giving and receiving flow well","the balance of giving and receiving is skewed","if you have extra, share it with someone","check whether a relationship has become one-sided"],
+["you look back at your effort and wait for the harvest","you work hard but see no results and feel impatient","don't rush results; check how things are growing","change your approach a little and sow again"],
+["steady practice is building real skill","you are bored with routine, or too much of a perfectionist","keep up your small daily efforts","don't obsess over perfection; find joy in it"],
+["you enjoy comfort and abundance earned by your own effort","you cling to appearances or lean too much on others","enjoy a reward for all your hard work","don't over-rely on others; value standing on your own"],
+["family, lasting wealth and a solid foundation are here","there is instability over family or money","build a foundation for the long run","talk about money and the future with your family"],
+["you are eager to learn and preparing for a practical goal","motivation fades and plans stall","start learning something new, step by step","break your goal down and start with what you can do today"],
+["you advance slowly but surely","you are so cautious you've nearly stopped","keep at what you decided, calmly and steadily","now and then, dare to add a small change"],
+["practical wisdom and warmth enrich your life","you worry too much or cling to things","care for your body and daily life, and fill yourself up","focus on the abundance you have, not your worries"],
+["experience and ability bring you stability and wealth","attachment to money or status is hardening you","trust your experience and stay grounded","value people's feelings, not just numbers and results"]
+];
+
+/* 文章のパーツ（たくさん用意して、毎回ちがう組み合わせにする） */
+const SX={
+ja:{
+ intro:[
+  ["今のあなたの状況を表す場所に出たのは「{c}」。","まず、今のあなたを映すカードは「{c}」です。","今この瞬間のあなたのまわりには「{c}」のエネルギーが流れています。","中心に置かれたのは「{c}」。これが今のあなたです。"],
+  ["今のあなたの前に横たわっている課題は「{c}」。","乗りこえるべきものとして重なっているのは「{c}」です。","あなたを試すように十字に置かれたのは「{c}」。","行く手をさえぎるカードとして出たのは「{c}」です。"],
+  ["あなたが心の上の方でめざしているものは「{c}」。","頭で思い描いている理想の形は「{c}」に表れています。","目標の位置には「{c}」が輝いています。","「こうなりたい」という意識の場所に出たのは「{c}」です。"],
+  ["この問題の根っこ、心の土台にあるのは「{c}」。","ふだんは意識しない心の奥に、「{c}」が眠っています。","すべての始まりとなっている根本には「{c}」があります。","足元の深い所を支えているのは「{c}」です。"],
+  ["少し前から続いてきた流れは「{c}」。","過ぎ去りつつある過去の場所には「{c}」が出ました。","ここまでの道のりを表すのは「{c}」です。","あなたの後ろ側、通りすぎてきた所にあるのは「{c}」。"],
+  ["これから近いうちにやってくる流れは「{c}」。","すぐ先の未来には「{c}」が待っています。","近い将来の扉の向こうに見えるのは「{c}」です。","次の一歩の先で出会うのは「{c}」。"],
+  ["この問題に向き合うあなた自身の姿は「{c}」。","あなたの今の態度や立ち位置を表すのは「{c}」です。","あなた自身のカードとして出たのは「{c}」。","鏡に映ったあなたの心は「{c}」の姿をしています。"],
+  ["あなたを取り巻く人や環境は「{c}」。","周りの人たちや環境からの影響は「{c}」に表れています。","外の世界があなたに向けている空気は「{c}」です。","まわりの人の目に映るあなたの状況は「{c}」。"],
+  ["あなたの心の奥の願い、そして不安は「{c}」。","望んでいることと恐れていることが混ざった場所に「{c}」が出ました。","期待と不安の両方を映すのは「{c}」です。","胸の内でそっと気にかけていることは「{c}」に表れています。"],
+  ["このまま進んだ先に待つ結果は「{c}」。","最終的にたどりつく場所を示すのは「{c}」です。","物語の結末として現れたのは「{c}」。","10枚の流れの行き着く先にあるのは「{c}」です。"]],
+ oriU:["正位置で出ているので、","まっすぐな向きで出ているので、","正位置のこのカードは、","素直な正位置。"],
+ oriR:["逆位置で出ているので、","さかさまに出ているので、","逆位置のこのカードは、","向きが逆になっていて、"],
+ kEnd:["{k}ことを示しています。","{k}と読めます。","{k}ことを伝えています。","「{k}」というメッセージです。","{k}様子が見えます。"],
+ tail:[
+  ["ここが、すべての出発点です。","この状態をまず受け止めることから始めましょう。","今の自分を正直に認めることが、最初の一歩です。"],
+  ["ここをどう扱うかが、いちばんの鍵になります。","この壁は、あなたを強くするために置かれています。","逃げずに向き合えば、ちゃんと越えられる課題です。"],
+  ["この理想を、心のコンパスにしてください。","めざす方向がはっきりしているのは、大きな強みです。","この目標が、あなたを前へ引っぱってくれます。"],
+  ["本当の答えのヒントは、ここに隠れています。","表に出ている悩みは、この土台から生まれています。","ここに気づけると、流れががらりと変わります。"],
+  ["この経験は、ちゃんと今のあなたの力になっています。","もう過ぎつつあることなので、引きずりすぎなくて大丈夫。","ここで学んだことを、次に生かしましょう。"],
+  ["準備しておくと、この流れを上手に使えます。","心づもりをしておけば、あわてずにすみます。","この流れは、もうすぐそこまで来ています。"],
+  ["あなたの心の持ち方ひとつで、流れは変えられます。","これが、今のあなたらしさです。","自分のこの姿に、まず気づいてあげてください。"],
+  ["まわりの力を上手に借りることも大切です。","環境はあなた一人では変えられなくても、付き合い方は選べます。","外からの影響に、ふり回されすぎないでね。"],
+  ["願いと不安は、実は表と裏の関係です。","気になっているのは、それだけ大切に思っている証拠です。","不安の正体がわかると、願いはぐっと近づきます。"],
+  ["ここまでのカードの流れが、この結果につながっています。","結果は決まった運命ではなく、今の流れの行き先です。","今からの行動で、この結果はさらに良くできます。"]],
+ suitGenre:{
+  love:["恋愛では、ときめきや積極的なアプローチに関わる場面です。","恋愛では、相手との気持ちの通い合いが大きなテーマになります。","恋愛では、言葉のやりとりや本音と建前が関わってきます。","恋愛では、安心感や将来の現実的な形が関わってきます。","恋愛の流れそのものを左右する、大きな意味を持つカードです。"],
+  work:["仕事では、やる気や新しい挑戦、勢いに関わる場面です。","仕事では、職場の人間関係や気持ちの面が関わってきます。","仕事では、判断や話し合い、計画の立て方が関わってきます。","仕事では、成果や収入、実務の積み重ねが関わってきます。","仕事の方向性そのものを左右する、大切なカードです。"],
+  money:["お金の面では、思い切った行動や新しいチャンスに関わります。","お金の面では、気持ちの満足感や使い方のクセが関わってきます。","お金の面では、計画や判断の正しさが試されます。","お金の面では、収入や貯え、現実的なやりくりにまっすぐ関わります。","お金の流れに大きな転機を感じさせるカードです。"],
+  people:["人間関係では、勢いや自己主張のぶつかり合いが関わってきます。","人間関係では、思いやりや心のつながりが大きなテーマです。","人間関係では、言葉の行き違いや考え方の違いが関わってきます。","人間関係では、信頼の積み重ねや役割分担が関わってきます。","人とのご縁そのものに関わる、大きな意味を持つカードです。"],
+  self:["あなたの本質としては、内側に燃える情熱の力を表しています。","あなたの本質としては、感受性の深さや心のやさしさを表しています。","あなたの本質としては、ものごとを見抜く頭の鋭さを表しています。","あなたの本質としては、地に足のついた粘り強さを表しています。","あなたの魂のテーマそのものを映すカードです。"],
+  future:["これからの運勢では、行動することで道が開けるサインです。","これからの運勢では、心の満たされ方がカギになります。","これからの運勢では、判断と決断が流れを決めていきます。","これからの運勢では、コツコツ積み上げたものが形になっていきます。","これからの人生に大きな流れを呼びこむカードです。"]},
+ suitExtra:[["ワンドは「火」のカード。行動力と情熱がテーマです。","火のエレメントらしく、気持ちが動けば物事も動きます。"],
+  ["カップは「水」のカード。心と感情がテーマです。","水のエレメントらしく、感じたことを大切にするほど流れがよくなります。"],
+  ["ソードは「風」のカード。考えと言葉がテーマです。","風のエレメントらしく、頭の中を整理すると道が見えてきます。"],
+  ["ペンタクルは「地」のカード。お金・体・暮らしがテーマです。","地のエレメントらしく、目に見える形で少しずつ積み上がっていきます。"]],
+ rankExtra:["エースは「始まり」の数。ここから新しく何かが芽を出します。","2は「選択とバランス」の数。二つのものの間で揺れています。","3は「広がり」の数。ひとつのことが形になり始めています。","4は「安定」の数。いったん落ち着いて足元を固める時です。","5は「変化と試練」の数。ゆらぎの中で成長が起きています。","6は「調和」の数。ぶつかったあとに落ち着きが戻ってきます。","7は「見直し」の数。やり方を工夫する時です。","8は「前進」の数。積み重ねが動き出す時です。","9は「完成目前」の数。ゴールはもうすぐそこです。","10は「ひと区切り」の数。ひとつの流れが終わり、次へ移ります。","ペイジは「学び手」。素直な心で受け取ることがテーマです。","ナイトは「行動する人」。動くことでしか見えないものがあります。","クイーンは「育てる人」。内側の力で周りを包みます。","キングは「まとめる人」。経験と責任で場をおさめます。"],
+ majExtra:["大アルカナのカードなので、人生の流れに関わる大きな意味を持っています。","大アルカナが出た所は、今回の占いの中でも特に大事なポイントです。","大アルカナは「運命のカード」。偶然ではなく、意味があってここに出ています。"],
+ theme:{
+  major5:["今回は大アルカナが{n}枚も出ています。小さな悩みではなく、人生の大きな節目に立っているサインです。","大アルカナが{n}枚。運命的な大きな流れが、あなたを動かそうとしています。"],
+  major3:["大アルカナが{n}枚出ていて、人生のひとつの節目にさしかかっていることがわかります。","大アルカナが{n}枚。日常の悩みの中に、少し大きな転機がまざっています。"],
+  major1:["大アルカナは{n}枚だけ。運命まかせではなく、あなたの行動で十分に動かせる問題です。","大アルカナが少なめ（{n}枚）なので、毎日の選び方しだいで流れはどんどん変わります。"],
+  suit:["{s}のカードが{n}枚と多く、今回のテーマは「{t}」です。","いちばん多いのは{s}で{n}枚。{t}が、今回の大きなカギです。"],
+  missing:["{s}のカードが1枚もありません。{t}の面は、今は少し置き去りになっているのかもしれません。","{s}がまったく出ていないのも特徴です。{t}にも、少し目を向けてみてください。"],
+  revMany:["逆位置が{n}枚と多め。外よりも、自分の内側を見直す時期に来ています。","逆位置が{n}枚。流れが少しつまっている所を、ゆっくりほぐしていく時です。"],
+  revFew:["逆位置はわずか{n}枚。流れはとても素直で、まっすぐ進みやすい状態です。","逆位置が少ない（{n}枚）ので、エネルギーが気持ちよく流れています。"],
+  revMid:["正位置と逆位置がほどよくまざっていて、良い所と見直す所がはっきりしています。","正逆のバランスがとれていて、落ち着いて状況を見られる配置です。"],
+  court:["人物カードが{n}枚。今回は、まわりの人の影響がとても大きく関わっています。","人物を表すカードが{n}枚出ていて、誰かとの関わりが流れを左右しそうです。"],
+  num:["数字の{r}が{n}枚そろっています。{m}","{r}のカードが{n}枚。{m}"],
+  start:["中心の「{c1}」から始まり、最後は「{c10}」へ。","今の「{c1}」から、行き着く先の「{c10}」まで、ひとつの物語が見えます。"]},
+ suitTheme:["行動と情熱","心と気持ち","考えと決断","お金・体・暮らし"],
+ numMean:["新しい始まりが重なっていて、何かがスタートする強いサインです。","選択の場面が重なっていて、決めることが大切な時です。","広がりと協力の気配が強く出ています。","安定を求める気持ちが強く表れています。","変化と試練が重なっています。ここが成長のポイントです。","調和と助け合いの流れが強まっています。","見直しと工夫がテーマになっています。","物事が前へ動き出す力が集まっています。","ゴール目前のカードが重なっています。","ひと区切りのカードが重なり、次の章が近づいています。"],
+ conn:{
+  c12:["現在の「{a}」に、課題の「{b}」が十字に重なっています。","「{a}」と「{b}」が交わる中心の十字が、今回の核心です。"],
+  c12uu:["どちらも正位置なので、課題はあなたの力で十分に乗りこえられる種類のものです。","両方とも正位置。壁はありますが、向き合えばちゃんと道が開けます。"],
+  c12ur:["課題のカードが逆位置なので、問題は外よりも、あなたの中のこだわりから生まれているのかもしれません。","課題が逆位置。手放すことで、思ったより簡単に越えられる壁です。"],
+  c12ru:["今は少し力が出しきれていませんが、課題そのものは素直でわかりやすいものです。","今のカードは逆位置でも、課題は正位置。何をすればいいかは、はっきりしています。"],
+  c12rr:["どちらも逆位置。一度立ち止まって、気持ちを整えることが近道になります。","両方とも逆位置なので、急いで動くより、まず休んで力をためる時です。"],
+  flow:["時間の流れで見ると、過去の「{a}」から、今の「{b}」、そして近い未来の「{c}」へと進んでいます。","「{a}」（過去）→「{b}」（現在）→「{c}」（近未来）という流れが見えます。"],
+  flowUp:["過去より未来の方が明るいカードになっていて、流れは良い方へ向かっています。","重かった流れが、少しずつ軽くなっていくのがわかります。"],
+  flowDown:["近い未来に少し注意が必要ですが、今のうちに手を打てば、つまずきは小さくできます。","先に小さな壁が見えますが、前もってわかっているなら大丈夫。準備しておきましょう。"],
+  flowSame:["大きな上がり下がりはなく、同じテーマをじっくり深めていく流れです。","流れは安定していて、今の延長線上に未来があります。"],
+  flowMajor:["近い未来に大アルカナがあるので、思っているより大きな出来事が近づいていそうです。","近い未来のカードは大アルカナ。流れが大きく切り替わるタイミングが来ます。"],
+  c34same:["頭で思い描く理想の「{a}」と、心の奥の「{b}」は同じ方向を向いています。迷わず進んで大丈夫。","理想（{a}）と根っこ（{b}）がつながっていて、心と頭が同じことを望んでいます。"],
+  c34diff:["頭では「{a}」を望みながら、心の奥では「{b}」が動いています。このずれに気づくことが、答えへの近道です。","理想の「{a}」と、根っこの「{b}」は少し違う方向を向いています。本当はどちらを大切にしたいのか、自分に聞いてみてください。"],
+  c710good:["あなた自身の「{a}」の姿勢が、そのまま「{b}」という結果につながっていきます。","今のあなた（{a}）のままで進めば、「{b}」へ自然とたどりつけます。"],
+  c710fix:["結果の「{b}」は、あなたの「{a}」の持ち方を少し変えることで、ぐっと良くなります。","「{a}」のあなたが少し向きを変えれば、「{b}」の結果も変わっていきます。"],
+  c8:["まわりの「{a}」は、あなたにとって{x}です。","周りの環境（{a}）は、今のあなたにとって{x}になっています。"],
+  c8good:["追い風","心強い味方"],c8bad:["少し向かい風","気をつけたい影響"],
+  c9hope:["願いの場所の「{a}」は、あなたが心の底で前向きな未来を信じていることを表しています。","「{a}」に表れた願いは、ちゃんと叶う方向に流れています。"],
+  c9fear:["願いと不安の場所の「{a}」は、心配が少し大きくなっていることを表しています。でも、不安はたいてい実際より大きく見えるものです。","「{a}」に表れた不安は、言葉にして外に出すことで小さくなっていきます。"]},
+ nature:{
+  type:["情熱で動く人","心で感じる人","頭で考えて動く人","現実を積み上げる人","運命を感じ取る力を持った人"],
+  open:["あなたは、根っこのところで「{t}」です。","カード全体から見えるあなたは、「{t}」。","10枚が教えてくれるあなたの本質は、「{t}」であることです。"],
+  you:["自分自身の位置に出た「{a}」は、{k}ということを表していて、","あなたのカード「{a}」からは、{k}というあなたらしさが見えます。そして、"],
+  root:["心の土台にある「{b}」が、その姿をずっと支えてきました。","根っこにある「{b}」が、あなたの行動のエネルギー源になっています。"],
+  end:["その力を信じていいんですよ。","それは、あなたが思っている以上に大きな強みです。","まだ気づいていない力が、ちゃんとあなたの中にあります。"]},
+ advice:{
+  love:["気持ちは、言葉にしないと伝わりません。小さな一言から始めてみて。","相手を変えようとするより、自分が心地よくいられる形を大切に。","焦りは禁物。ゆっくり育てる恋ほど、長く続きます。","自分を好きでいることが、いちばんの魅力になります。"],
+  work:["今週できる小さな一歩を、ひとつだけ決めてみて。","がんばりすぎた日は、ちゃんと休むことも仕事のうちです。","信頼できる人に、一度相談してみると道が見えます。","結果だけでなく、積み重ねてきた過程も自分でほめてあげて。"],
+  money:["大きな決断は、ひと晩寝かせてから決めてね。","使ったお金を一週間だけメモすると、流れが見えてきます。","焦って増やそうとせず、守りと楽しみのバランスを大切に。","大きなお金の判断は、専門の人にも相談してね。"],
+  people:["相手の言葉より、気持ちの方に耳をすませてみて。","合わない人とは、無理に近づかず、ほどよい距離をとってもOK。","「ありがとう」を一回多く言うだけで、空気が変わります。","ひとりで抱えず、信頼できる人を一人思い浮かべてみて。"],
+  self:["自分のいい所を、三つ紙に書き出してみて。","人と比べるより、昨日の自分と比べてみて。","心が疲れたら、好きなことをする時間を先に予定に入れて。","「こうあるべき」より「こうしたい」を大切に。"],
+  future:["流れが来たら、迷わず乗れるように準備をしておいて。","小さな変化を、楽しむ気持ちで受け入れてみて。","今日の小さな行動が、未来の大きな流れになります。","迷ったら、ワクワクする方を選んでね。"]},
+ adviceHead:["近い未来の「{c}」から：","結果の「{c}」から：","課題の「{c}」から：","あなた自身の「{c}」から："],
+ closing:{
+  joy:["とっても明るいカードがそろったよ✨ この流れ、自信をもって進んでね！","光のカードがいっぱい！あなたの笑顔が、もっと良い流れを呼んでくるよ☀️","しーちゃん、読んでいてうれしくなっちゃった。いいこと、きっと起きるよ💫"],
+  normal:["良い所も、気をつける所もはっきり見えたね。あなたなら大丈夫🔮","ひとつずつ進めば、ちゃんと道はつながっていくよ。応援してるね✨","カードはいつも、あなたの味方だよ。また迷ったら来てね🌙"],
+  serious:["ちょっと考えることが多いカードだったけど、それだけ大事な時ってことだよ。","今は立ち止まって見直す時。焦らなくていいからね🍵","大切な分かれ道に立ってるみたい。あなたの心の声を信じてね🔮"],
+  surprise:["大きな変化のカードが出てて、しーちゃんもびっくり！でも、変化はチャンスの入り口だよ✨","思いがけない流れが来そう…！心の準備をしておけば、きっと味方にできるよ🌀","わぁ、運命が動き出してる感じ！ドキドキするけど、楽しんでいこうね💫"],
+  worry:["今はちょっとしんどい時期かもしれないけど、カードの最後には必ず光があるよ。","がんばってきたんだね。今日は自分をいっぱいほめて、ゆっくり休んでね🌙","どん底の先には夜明けしかないよ。しーちゃん、応援してるからね💜"]},
+ summary:{
+  joy:["最後は「{c}」！いい流れが来てるよ✨","光のカードがたくさん！自信もってね☀️","「{c}」が未来でニコニコしてるよ💫"],
+  normal:["「{c}」に向かって、一歩ずつだよ🔮","良い所と気をつける所、両方見えたよ✨","カードの声、ちゃんと聞こえたよ🌙"],
+  serious:["今は見直しの時。焦らなくて大丈夫🍵","「{c}」が大事なヒントをくれてるよ","分かれ道…心の声を信じてね🔮"],
+  surprise:["大きな変化の予感…！ドキドキ🌀","「{c}」が出た！流れが動き出すよ💫","思いがけない展開が来そう…！"],
+  worry:["しんどい時期でも、光はちゃんとあるよ💜","まずはゆっくり休んでね🌙","夜明けはもうすぐだよ🌅"]},
+ hd:{theme:"全体のテーマ",cards:"10枚のカードの読み解き",conn:"カード同士のつながり",nature:"あなたの本質",advice:"これからのアドバイス",word:"しーちゃんからひとこと"},
+ freeNote:["相談してくれた内容も心に置きながら、カードを読んでいくね。","書いてくれた気持ち、ちゃんと受け取ったよ。その上でカードを読んでいくね。"],
+ genreOpen:{love:"恋愛について",work:"仕事について",money:"お金について",people:"人間関係について",self:"あなたの本質について",future:"これからの運勢について"},
+ genreOpenTpl:["{g}占っていくね。","今回は{g}、10枚のカードに聞いてみたよ。"],
+ adv:"アドバイスは、{a}。",colon:"：",q:["",""],
+ majGen:["このカードは、{g}の行方に深く関わってきます。","{g}にとって、見のがせない大事なサインです。","{g}の流れを大きく動かす力を持っています。","{g}の転機を知らせるカードです。"],
+ genreWord:{love:"恋",work:"仕事",money:"お金の流れ",people:"人とのご縁",self:"あなたの生き方",future:"これからの人生"}
+},
+en:{
+ intro:[
+  ["In the position of your present situation lies {c}.","The card reflecting you right now is {c}.","The energy of {c} is flowing around you at this moment."],
+  ["Crossing you as your challenge is {c}.","The obstacle placed across your path is {c}.","Laid over you to test you is {c}."],
+  ["What you consciously aim for is shown by {c}.","Your ideal, the shape you picture in your mind, is {c}.","Shining in the place of your goal is {c}."],
+  ["At the root of this matter, deep in your heart, lies {c}.","Sleeping in the foundation you rarely notice is {c}.","The source from which everything began is {c}."],
+  ["The flow that has carried you until now is {c}.","In the place of the passing past appears {c}.","The road behind you is shown by {c}."],
+  ["The flow approaching in the near future is {c}.","Waiting just ahead of you is {c}.","Behind the door of the near future stands {c}."],
+  ["You yourself, facing this matter, appear as {c}.","Your attitude and position right now are shown by {c}.","The card that represents you is {c}."],
+  ["The people and environment around you are shown by {c}.","The influence of those around you appears as {c}.","The air the outside world sends your way is {c}."],
+  ["Your deepest hopes, and fears, are shown by {c}.","Where hope and fear mix together, {c} appears.","Reflecting both your wishes and worries is {c}."],
+  ["The outcome waiting ahead on this path is {c}.","The place you will finally reach is shown by {c}.","Appearing as the ending of this story is {c}."]],
+ oriU:["Upright, it says that ","In its upright position, it shows that ","Facing upright, this card means "],
+ oriR:["Reversed, it says that ","Turned upside down, it shows that ","In reverse, this card means "],
+ kEnd:["{k}.","{k}, and that is its message.","{k}; that is what it wants you to know."],
+ tail:[
+  ["This is your starting point.","Accepting this honestly is the first step."],
+  ["How you handle this is the key.","This wall is here to make you stronger."],
+  ["Let this ideal be your compass.","A clear direction is a great strength."],
+  ["The real answer is hidden here.","Your visible worries grow from this foundation."],
+  ["This experience has become your strength.","It is passing now, so you needn't drag it along."],
+  ["Prepare now and you can use this flow well.","This flow is already close at hand."],
+  ["Your mindset alone can change the flow.","This is who you are right now."],
+  ["Borrowing strength from others matters too.","You can't change your surroundings alone, but you can choose how you relate to them."],
+  ["Hope and fear are two sides of one coin.","Worrying about it shows how much it matters to you."],
+  ["The flow of the cards leads to this result.","The outcome isn't fixed fate; your actions can make it even better."]],
+ suitGenre:{
+  love:["In love, this concerns excitement and bold approaches.","In love, the exchange of feelings is the key theme.","In love, words, honesty and what goes unsaid come into play.","In love, security and the practical future are involved.","This card carries great weight for the course of your love life."],
+  work:["At work, this concerns drive, new challenges and momentum.","At work, relationships and feelings in the workplace are involved.","At work, judgment, discussion and planning come into play.","At work, results, income and steady practical effort are involved.","This card shapes the very direction of your work."],
+  money:["With money, this concerns bold action and new chances.","With money, satisfaction and spending habits come into play.","With money, your planning and judgment are tested.","With money, this speaks directly to income, savings and budgeting.","This card hints at a major turning point in your finances."],
+  people:["In relationships, clashes of momentum and self-assertion are involved.","In relationships, kindness and emotional bonds are the theme.","In relationships, miscommunication and differing views come into play.","In relationships, building trust and sharing roles are involved.","This card speaks to the very nature of your connections."],
+  self:["As your true nature, this shows the passion burning inside you.","As your true nature, this shows deep sensitivity and kindness.","As your true nature, this shows a sharp, perceptive mind.","As your true nature, this shows grounded persistence.","This card mirrors the theme of your very soul."],
+  future:["For your future, this is a sign that action opens the way.","For your future, how your heart is fulfilled is the key.","For your future, judgment and decisions will set the course.","For your future, what you've steadily built will take shape.","This card invites a great new flow into your life."]},
+ suitExtra:[["Wands are the cards of Fire: action and passion.","As a Fire card, when your heart moves, things move."],
+  ["Cups are the cards of Water: heart and emotion.","As a Water card, the more you honor your feelings, the better things flow."],
+  ["Swords are the cards of Air: thoughts and words.","As an Air card, clearing your mind reveals the path."],
+  ["Pentacles are the cards of Earth: money, body and daily life.","As an Earth card, things build up step by step in visible form."]],
+ rankExtra:["The Ace is the number of beginnings; something new is sprouting.","Two is the number of choice and balance.","Three is the number of growth; things are taking shape.","Four is the number of stability; time to steady your footing.","Five is the number of change and trial; growth happens in the shake-up.","Six is the number of harmony; calm returns after a clash.","Seven is the number of reassessment; time to try a new approach.","Eight is the number of movement; your efforts begin to move.","Nine is the number of near-completion; the goal is close.","Ten is the number of endings; one cycle closes and the next begins.","The Page is the learner; receiving with an open heart is the theme.","The Knight is the doer; some things can only be seen by moving.","The Queen is the nurturer; her inner strength embraces others.","The King is the leader; he settles things with experience and responsibility."],
+ majExtra:["As a Major Arcana card, it carries big meaning for your life's course.","Where a Major Arcana card appears is an especially important point.","Major Arcana are the cards of fate; it is here for a reason."],
+ theme:{
+  major5:["A full {n} Major Arcana cards appeared. You are standing at a major turning point in life.","{n} Major Arcana cards: a great, fateful flow is trying to move you."],
+  major3:["With {n} Major Arcana cards, you are approaching a milestone in life.","{n} Major Arcana cards: a meaningful turning point is mixed into everyday concerns."],
+  major1:["Only {n} Major Arcana card(s): this is not up to fate; your actions can change it.","With few Major Arcana ({n}), your daily choices will shape the flow."],
+  suit:["{s} dominate with {n} cards, so the theme is \"{t}\".","The most common suit is {s} ({n} cards): {t} is the key this time."],
+  missing:["There are no {s} at all. {t} may be a little neglected right now.","No {s} appeared. Try paying some attention to {t} too."],
+  revMany:["{n} reversed cards: it's time to look inward rather than outward.","{n} reversed cards: time to gently loosen what's blocked."],
+  revFew:["Only {n} reversed card(s): the flow is very smooth and straightforward.","With few reversals ({n}), energy is flowing freely."],
+  revMid:["Upright and reversed cards are well mixed: strengths and areas to review are clear.","A good balance of upright and reversed lets you see things calmly."],
+  court:["{n} court cards appeared: other people have a big influence this time.","{n} people cards: your connection with someone may sway the flow."],
+  num:["You drew {n} cards numbered {r}. {m}","{n} cards of the number {r}. {m}"],
+  start:["Beginning with {c1} at the center and ending with {c10}.","From {c1} now to {c10} at the end, a single story unfolds."]},
+ suitTheme:["action and passion","heart and feelings","thought and decisions","money, body and daily life"],
+ numMean:["Beginnings overlap: a strong sign that something is starting.","Choices overlap: deciding is important now.","Growth and cooperation are strongly present.","A strong wish for stability shows.","Change and trial overlap; this is where you grow.","Harmony and mutual help are strengthening.","Reassessment and new approaches are the theme.","Forces gather to move things forward.","Cards of near-completion overlap.","Cards of endings overlap; a new chapter is near."],
+ conn:{
+  c12:["{b} crosses {a} at the heart of the spread.","The cross of {a} and {b} is the core of this reading."],
+  c12uu:["Both are upright, so this challenge is one you can overcome.","Both upright: there's a wall, but facing it opens the way."],
+  c12ur:["The challenge is reversed, so the problem may come from your own attachments rather than outside.","The challenge is reversed: letting go makes it easier than you think."],
+  c12ru:["You're not at full strength now, but the challenge itself is clear and simple.","Even with the present reversed, the challenge is upright: what to do is clear."],
+  c12rr:["Both are reversed. Pausing to settle your heart is the shortcut.","Both reversed: rest and gather strength before moving."],
+  flow:["In time, the flow moves from {a} (past) to {b} (present) to {c} (near future).","The flow runs {a} → {b} → {c}."],
+  flowUp:["The future cards are brighter than the past: things are improving.","The heavy flow is gradually lightening."],
+  flowDown:["The near future needs care, but acting now keeps any stumble small.","A small wall lies ahead; knowing it in advance means you can prepare."],
+  flowSame:["No big ups or downs: you are deepening one theme steadily.","The flow is stable; the future lies along your present path."],
+  flowMajor:["A Major Arcana card in the near future hints at a bigger event than you expect.","The near future holds a Major Arcana card: a big switch in the flow is coming."],
+  c34same:["Your conscious ideal, {a}, and your root, {b}, point the same way. Go ahead with confidence.","Ideal ({a}) and root ({b}) are linked; heart and head want the same thing."],
+  c34diff:["Your head wants {a}, while deep down {b} is at work. Noticing this gap is the shortcut to your answer.","Your ideal ({a}) and your root ({b}) point in different directions. Ask yourself which you truly value."],
+  c710good:["Your own stance, {a}, leads naturally to {b}.","If you go on as you are ({a}), you'll reach {b}."],
+  c710fix:["The outcome, {b}, improves greatly if you adjust how you hold {a}.","If the {a} in you shifts a little, the {b} outcome shifts too."],
+  c8:["Your surroundings, {a}, are {x} for you.","The environment ({a}) acts as {x} right now."],
+  c8good:["a tailwind","a strong ally"],c8bad:["a bit of a headwind","an influence to watch"],
+  c9hope:["{a} in the place of hopes shows you deeply believe in a bright future.","The hope shown by {a} is flowing toward fulfillment."],
+  c9fear:["{a} in the place of hopes and fears shows your worry has grown a little large. Fears usually look bigger than they are.","The fear shown by {a} shrinks once you put it into words."]},
+ nature:{
+  type:["someone moved by passion","someone who feels with the heart","someone who thinks before acting","someone who builds reality step by step","someone with a gift for sensing fate"],
+  open:["At your core, you are {t}.","Seen through all ten cards, you are {t}.","Your true nature, as the cards reveal it, is {t}."],
+  you:["Your own card, {a}, shows that {k}, and ","From your card, {a}, we see that {k}. And "],
+  root:["{b} at your foundation has always supported you.","{b} at your root is the source of your energy."],
+  end:[" Trust that strength."," It's a bigger strength than you think."," There is power in you that you haven't noticed yet."]},
+ advice:{
+  love:["Feelings don't reach others unless spoken. Start with one small word.","Rather than changing them, value a shape that feels good to you.","Don't rush; slow-grown love lasts longest.","Liking yourself is your greatest charm."],
+  work:["Decide on one small step you can take this week.","On days you've pushed hard, resting is part of the job.","Talking to someone you trust will show you the way.","Praise yourself for the process, not just the results."],
+  money:["Sleep on big decisions before making them.","Note your spending for one week and you'll see the flow.","Don't rush to grow money; balance saving and enjoying.","For big financial decisions, consult a professional too."],
+  people:["Listen to their feelings more than their words.","It's okay to keep a healthy distance from people you don't click with.","Saying \"thank you\" once more changes the mood.","Don't carry it alone; think of one person you trust."],
+  self:["Write down three things you like about yourself.","Compare yourself with yesterday's you, not with others.","When your heart is tired, schedule time for what you love first.","Value \"I want to\" over \"I should\"."],
+  future:["Be ready to ride the wave when it comes.","Welcome small changes with a playful heart.","Today's small action becomes tomorrow's big flow.","When in doubt, choose what excites you."]},
+ adviceHead:["From {c} in the near future: ","From {c} as the outcome: ","From {c} as your challenge: ","From {c}, your own card: "],
+ closing:{
+  joy:["Such bright cards ✨ Go forward with confidence!","So many cards of light! Your smile will bring even better things ☀️","Reading this made me happy. Good things are coming 💫"],
+  normal:["Your strengths and cautions are clear now. You'll be fine 🔮","Step by step, the road will connect. I'm cheering for you ✨","The cards are always on your side. Come back whenever you're lost 🌙"],
+  serious:["Lots to think about, which means this is an important time.","Now is a time to pause and review. No need to rush 🍵","You're at an important crossroads. Trust your inner voice 🔮"],
+  surprise:["Cards of big change! Even I was surprised. But change is the door to chance ✨","Something unexpected is coming! Prepare your heart and it'll be on your side 🌀","Wow, fate is moving! Exciting, so let's enjoy it 💫"],
+  worry:["It may be a hard time, but there's always light at the end of the cards.","You've worked so hard. Praise yourself today and rest well 🌙","After the darkest point comes only dawn. I'm cheering for you 💜"]},
+ summary:{
+  joy:["{c} at the end! Good flow ahead ✨","Lots of cards of light! Be confident ☀️","{c} is smiling in your future 💫"],
+  normal:["Step by step toward {c} 🔮","I saw the good and the cautions ✨","I heard the cards' voices clearly 🌙"],
+  serious:["Time to review. No rush 🍵","{c} gives you an important hint","A crossroads… trust your heart 🔮"],
+  surprise:["A big change is coming…! 🌀","{c}! The flow is starting to move 💫","Something unexpected may happen…!"],
+  worry:["Even in hard times, there's light 💜","First, rest well 🌙","Dawn is near 🌅"]},
+ hd:{theme:"Overall theme",cards:"The ten cards",conn:"How the cards connect",nature:"Your true nature",advice:"Advice for the road ahead",word:"A word from Shi-chan"},
+ freeNote:["I'll read the cards while keeping your question in my heart.","I've received your feelings. Now let's read the cards."],
+ genreOpen:{love:"your love life",work:"your work",money:"your money",people:"your relationships",self:"your true self",future:"your future"},
+ genreOpenTpl:["Let's read about {g}.","I asked the ten cards about {g}."],
+ adv:"The advice: {a}.",colon:": ",q:["",""],
+ majGen:["This card is deeply tied to the course of {g}.","For {g}, this is an important sign not to miss.","It has the power to move {g} in a big way.","It announces a turning point in {g}."],
+ genreWord:{love:"your love life",work:"your work",money:"your finances",people:"your relationships",self:"your way of life",future:"your future"}
+}}[LANG];
+
+/* 同じ人が何度やっても同じ文にならないよう、使った言い回しを覚えておく */
+let seenDB=store.get("seen",{});
+function pk(key,arr){
+  if(!arr||!arr.length)return "";
+  if(arr.length===1)return arr[0];
+  key=LANG+"."+key;let used=seenDB[key]||[];
+  let free=arr.map((_,i)=>i).filter(i=>!used.includes(i));
+  const last=used[used.length-1];
+  if(!free.length){used=[];free=arr.map((_,i)=>i)}
+  if(free.length>1)free=free.filter(i=>i!==last);
+  const i=free[Math.floor(Math.random()*free.length)];
+  used.push(i);seenDB[key]=used;return arr[i];
+}
+function fill(t,v){return String(t).replace(/\{(\w+)\}/g,(m,k)=>v[k]!=null?v[k]:m)}
+const GOOD=new Set(["M3","M6","M10","M14","M17","M19","M21","M8","w6","c1","c2","c3","c9","c10","p9","p10","w4"]);
+const HARD=new Set(["M13","M15","M16","M18","s3","s5","s9","s10","c5","p5","w10","s8"]);
+const SURP=new Set(["M10","M13","M16","M20"]);
+function cardIndex(c){return CARDS.indexOf(c)}
+function cq(c){return SX.q[0]+cname(c)+SX.q[1]}
+function stdReading(){
+  const P=state.picked.map((p,i)=>{const c=CARDS[p.ci];const d=(LANG==="ja"?D_JA:D_EN)[p.ci];return{i,c,rev:!!p.rev,k:p.rev?d[1]:d[0],a:p.rev?d[3]:d[2]}});
+  const g=state.genre||"future";const out=[];const ori=r=>r?T.rev:T.up;
+  /* --- 数を数える --- */
+  const majors=P.filter(x=>x.c.major).length;
+  const revN=P.filter(x=>x.rev).length;
+  const suitN=[0,0,0,0];P.forEach(x=>{if(!x.c.major)suitN[x.c.suit]++});
+  const courts=P.filter(x=>!x.c.major&&x.c.rank>=10).length;
+  const rankN={};P.forEach(x=>{if(!x.c.major&&x.c.rank<10)rankN[x.c.rank]=(rankN[x.c.rank]||0)+1});
+  const suitName=si=>LANG==="ja"?SUITS[si].ja:SUITS[si].en;
+  /* --- 気分（顔）--- */
+  let score=0;P.forEach(x=>{const w=(x.i===9||x.i===5)?2:1;if(!x.rev)score+=1*w;if(GOOD.has(x.c.id))score+=(x.rev?1:2)*w;if(HARD.has(x.c.id))score-=(x.rev?1:2)*w});
+  const surpN=P.filter(x=>SURP.has(x.c.id)).length;
+  let mood=(SURP.has(P[9].c.id)||surpN>=2)?"surprise":score>=12?"joy":score>=6?"normal":score>=2?"serious":"worry";
+  /* --- 全体のテーマ --- */
+  out.push("## "+SX.hd.theme);
+  let th=[fill(pk("gOpen",SX.genreOpenTpl),{g:SX.genreOpen[g]})];
+  if((state.free||"").trim())th.push(pk("free",SX.freeNote));
+  th.push(fill(pk("tStart",SX.theme.start),{c1:cq(P[0].c),c10:cq(P[9].c)}));
+  th.push(fill(pk(majors>=5?"tM5":majors>=3?"tM3":"tM1",majors>=5?SX.theme.major5:majors>=3?SX.theme.major3:SX.theme.major1),{n:majors}));
+  const mx=Math.max(...suitN);
+  if(mx>=4){const si=suitN.indexOf(mx);th.push(fill(pk("tSuit",SX.theme.suit),{s:suitName(si),n:mx,t:SX.suitTheme[si]}))}
+  const miss=suitN.map((n,i)=>n?-1:i).filter(i=>i>=0);
+  if(miss.length===1)th.push(fill(pk("tMiss",SX.theme.missing),{s:suitName(miss[0]),t:SX.suitTheme[miss[0]]}));
+  th.push(fill(pk(revN>=6?"tRm":revN<=2?"tRf":"tRmid",revN>=6?SX.theme.revMany:revN<=2?SX.theme.revFew:SX.theme.revMid),{n:revN}));
+  if(courts>=3)th.push(fill(pk("tCourt",SX.theme.court),{n:courts}));
+  Object.keys(rankN).forEach(r=>{if(rankN[r]>=3){const rl=LANG==="ja"?(r==="0"?"エース":String(+r+1)):(r==="0"?"Ace":String(+r+1));th.push(fill(pk("tNum",SX.theme.num),{r:rl,n:rankN[r],m:SX.numMean[r]}))}});
+  out.push(th.join(LANG==="ja"?"":" "));
+  /* --- 10枚の読み解き --- */
+  const usedLines=new Set();
+  out.push("## "+SX.hd.cards);
+  P.forEach(x=>{
+    out.push(`### ${x.i+1}. ${T.pos[x.i]}${SX.colon}${cname(x.c)}（${ori(x.rev)}）`);
+    const s=[];
+    s.push(fill(pk("in"+x.i,SX.intro[x.i]),{c:cq(x.c)}));
+    s.push(pk(x.rev?"oR":"oU",x.rev?SX.oriR:SX.oriU)+fill(pk("kE",SX.kEnd),{k:x.k}));
+    // カードの性質・ジャンルの話（毎回どれかを選ぶ）
+    const cand=[];
+    if(x.c.major){cand.push(SX.suitGenre[g][4],fill(pk("mg",SX.majGen),{g:SX.genreWord[g]}),pk("mX",SX.majExtra))}
+    else{cand.push(SX.suitGenre[g][x.c.suit],pk("sX"+x.c.suit,SX.suitExtra[x.c.suit]),SX.rankExtra[x.c.rank])}
+    for(let j=cand.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[cand[j],cand[r]]=[cand[r],cand[j]]}
+    let added=0;for(const line of cand){if(usedLines.has(line))continue;usedLines.add(line);s.push(line);added++;if(added>=(Math.random()<.4?2:1))break}
+    if(Math.random()<.35)s.push(fill(SX.adv,{a:x.a}));
+    s.push(pk("tl"+x.i,SX.tail[x.i]));
+    out.push(s.join(LANG==="ja"?"":" "));
+  });
+  /* --- つながり --- */
+  out.push("## "+SX.hd.conn);
+  const C=SX.conn,[p1,p2,p3,p4,p5,p6,p7,p8,p9,p10]=P;
+  out.push(fill(pk("c12",C.c12),{a:cq(p1.c),b:cq(p2.c)})+(LANG==="ja"?"":" ")+pk("c12x",!p1.rev&&!p2.rev?C.c12uu:!p1.rev&&p2.rev?C.c12ur:p1.rev&&!p2.rev?C.c12ru:C.c12rr));
+  const val=x=>(x.rev?-1:1)+(GOOD.has(x.c.id)?1:0)-(HARD.has(x.c.id)?1:0);
+  const dv=val(p6)-val(p5);
+  out.push(fill(pk("fl",C.flow),{a:cq(p5.c),b:cq(p1.c),c:cq(p6.c)})+(LANG==="ja"?"":" ")+(p6.c.major&&Math.random()<.6?pk("flM",C.flowMajor):dv>0?pk("flU",C.flowUp):dv<0?pk("flD",C.flowDown):pk("flS",C.flowSame)));
+  const same34=(p3.c.major&&p4.c.major)||(!p3.c.major&&!p4.c.major&&p3.c.suit===p4.c.suit)||(p3.rev===p4.rev&&Math.random()<.3);
+  out.push(fill(pk(same34?"c34s":"c34d",same34?C.c34same:C.c34diff),{a:cq(p3.c),b:cq(p4.c)}));
+  out.push(fill(pk(p10.rev?"c710f":"c710g",p10.rev?C.c710fix:C.c710good),{a:cq(p7.c),b:cq(p10.c)}));
+  out.push(fill(pk("c8",C.c8),{a:cq(p8.c),x:pk(val(p8)>0?"c8g":"c8b",val(p8)>0?C.c8good:C.c8bad)}));
+  const fear=p9.rev||HARD.has(p9.c.id)||(!p9.c.major&&p9.c.suit===2);
+  out.push(fill(pk(fear?"c9f":"c9h",fear?C.c9fear:C.c9hope),{a:cq(p9.c)}));
+  /* --- 本質 --- */
+  out.push("## "+SX.hd.nature);
+  let ti=4;if(majors<4){const m=Math.max(...suitN);ti=suitN.indexOf(m)}
+  const N=SX.nature;
+  out.push(fill(pk("nO",N.open),{t:N.type[ti]})+(LANG==="ja"?"":" ")+fill(pk("nY",N.you),{a:cq(p7.c),k:p7.k})+fill(pk("nR",N.root),{b:cq(p4.c)})+pk("nE",N.end));
+  /* --- アドバイス --- */
+  out.push("## "+SX.hd.advice);
+  const advSrc=[p6,p10,p2,p7];const used=new Set();
+  [0,1,2,3].forEach(j=>{const x=advSrc[j];if(used.has(x.c.id)||(j===3&&Math.random()<.5))return;used.add(x.c.id);
+    out.push("- "+fill(SX.adviceHead[j],{c:cq(x.c)})+x.a+(LANG==="ja"?"。":"."))});
+  out.push("- "+pk("adv"+g,SX.advice[g]));
+  /* --- ひとこと --- */
+  out.push("## "+SX.hd.word);
+  out.push(pk("cl"+mood,SX.closing[mood]));
+  const summary=fill(pk("sm"+mood,SX.summary[mood]),{c:cq(p10.c)});
+  store.set("seen",seenDB);
+  return {mood,summary,body:out.join("\n")};
 }
 
 /* ---------- reading ---------- */
@@ -779,16 +1323,17 @@ async function callAI(text,maxTok,limitMs){
 }
 function revealCards(){
   return new Promise(res=>{const slots=[...document.querySelectorAll("#spread .slot")];let i=0;
-    const step=()=>{if(i>=slots.length)return res();slots[i].classList.add("open");sfx.flip();i++;setTimeout(step,330)};step()});
+    const step=()=>{if(i>=slots.length)return res();slots[i].classList.add("open");sfx.pata();
+      const p=state.picked[i];if(p&&p.rev)setTimeout(sfx.hyuu,160);i++;setTimeout(step,p&&p.rev?520:330)};step()});
 }
 /* ---------- waiting show: Shi-chan reacts while the AI reads (silent: bubble + face + effects) ---------- */
 function fxPlay(kind){
-  const L=$("fxRead");if(!L||!kind)return;
+  const L=$("fxRead");if(!L)return;if(!kind){sfx.powaan();return}
   const add=(cls,txt,x,y,extra)=>{const e=document.createElement("span");e.className=cls;e.textContent=txt;e.style.left=x+"%";e.style.top=y+"%";if(extra)Object.assign(e.style,extra);L.appendChild(e);setTimeout(()=>e.remove(),1500);return e};
-  if(kind==="sweat"){[[78,8,0],[16,14,250],[84,22,500]].forEach(([x,y,d])=>setTimeout(()=>add("drop","💧",x,y),d));tone(900,.12,"sine",.04,0,500)}
+  if(kind==="sweat"){[[78,8,0],[16,14,250],[84,22,500]].forEach(([x,y,d])=>setTimeout(()=>add("drop","💧",x,y),d));sfx.giku()}
   else if(kind==="sparkle"){for(let i=0;i<7;i++){const a=i/7*Math.PI*2;add("spk",i%2?"✨":"⭐",45,62,{"--dx":Math.cos(a)*60+"px","--dy":Math.sin(a)*50+"px",animationDelay:(i*40)+"ms"})}sfx.sparkle()}
   else if(kind==="flash"){const e=document.createElement("span");e.className="flash";L.appendChild(e);setTimeout(()=>e.remove(),1300);tone(1568,.35,"sine",.05)}
-  else if(kind==="shake"){const im=$("shiRead");im.classList.remove("shake");void im.offsetWidth;im.classList.add("shake");setTimeout(()=>im.classList.remove("shake"),650);tone(180,.2,"triangle",.06)}
+  else if(kind==="shake"){const im=$("shiRead");im.classList.remove("shake");void im.offsetWidth;im.classList.add("shake");setTimeout(()=>im.classList.remove("shake"),650);sfx.giku()}
 }
 const waitShow={t:0,i:0,list:[],hold:0,last:-1};
 function waitShowStart(){
@@ -818,15 +1363,30 @@ async function startReading(){
   buildSpread(false);
   say("bubRead","shiRead",T.readOpen,"serious");
   await revealCards();
-  await doAI();
+  if(state.mode==="ai"&&aiAvailable())await doAI();else await doStd(false);
   reading=false;
+}
+/* ふつう占い：少しだけしーちゃんがカードを読む演出 → 結果 */
+async function doStd(fallback,errDetail){
+  $("retry").style.display="none";
+  const wp=$("waitPill");
+  if(!fallback){
+    say("bubRead","shiRead",T.stdThink,"serious");
+    $("resultBox").innerHTML=`<div class="result" style="text-align:center;font-size:20px"><span class="dots"><span>🔮</span><span>✨</span><span>🔮</span></span></div>`;
+    waitShowStart();waitShow.t=Date.now()+1200;wp.textContent=T.badgeStd;wp.hidden=false;
+    const t0=Date.now();await new Promise(r=>{const iv=setInterval(()=>{waitShowTick();if(Date.now()-t0>5600){clearInterval(iv);r()}},300)});
+    wp.hidden=true;
+  }
+  const p=stdReading();
+  state.reading={...p,mode:"std",fallback:!!fallback,err:errDetail||"",model:"",date:Date.now(),genre:state.genre,picked:state.picked};saveState();
+  addHistory(state.reading);showResult(state.reading,true);
 }
 async function doAI(){
   $("retry").style.display="none";
   say("bubRead","shiRead",T.readThink,"serious");
   $("resultBox").innerHTML=`<div class="result" style="text-align:center;font-size:20px"><span class="dots"><span>🔮</span><span>✨</span><span>🔮</span></span></div>`;
   const wp=$("waitPill"),w0=Date.now();readStart=w0;waitShowStart();
-  const wtick=()=>{const el=Date.now()-w0;wp.textContent=T.waitT(Math.round(el/1000));if(el>READ_CAP+3000&&readCtrl){try{readCtrl.abort()}catch(e){}}else waitShowTick()};
+  const wtick=()=>{const el=Date.now()-w0;wp.textContent="🔮 AI　"+T.waitT(Math.round(el/1000));if(el>READ_CAP+3000&&readCtrl){try{readCtrl.abort()}catch(e){}}else waitShowTick()};
   wtick();wp.hidden=false;const wt=setInterval(wtick,1000);
   try{
     // 混んでいた時は、少し待って自動でやり直す（全部で3回まで）
@@ -839,23 +1399,24 @@ async function doAI(){
     }
     if(!txt)throw lastErr||{kind:"busy",detail:"time limit ("+Math.round((Date.now()-w0)/1000)+"s)"};
     clearInterval(wt);wp.hidden=true;const p=parseReading(txt);
-    state.reading={...p,model:callAI.model||"",date:Date.now(),genre:state.genre,picked:state.picked};saveState();
+    store.set("aiDay",today()); // 成功した時だけ「今日のAI」を使ったことにする
+    state.reading={...p,mode:"ai",model:callAI.model||"",date:Date.now(),genre:state.genre,picked:state.picked};saveState();
     addHistory(state.reading);showResult(state.reading,true);
   }catch(e){
     clearInterval(wt);wp.hidden=true;
-    const k=e&&e.kind;$("resultBox").innerHTML="";
-    say("bubRead","shiRead",k==="busy"?T.errBusy:k==="off"?T.errOff:T.errNet,"worry");$("retry").style.display="block";
-    // 原因を画面に出す（スクショで送れるように）
-    let test="";
-    if(k!=="off"){try{const t=await callAI("Reply with the single word OK.",1000,25000);test="mini test: OK ("+t.trim().slice(0,20)+")"}catch(e2){test="mini test: NG "+(e2&&e2.detail||"")}}
-    $("resultBox").innerHTML=`<div class="errbox"><b>${LANG==="ja"?"エラーの内容（このままスクショを送ってね）":"Error details (please send a screenshot)"}</b><br>v${APP_VERSION}<br>${escapeHTML((e&&e.detail)||String(e))}<br>${escapeHTML(test)}</div>`;
+    // AIがダメでも、エラーで終わらせず「ふつう占い」の結果を出す
+    await doStd(true,`v${APP_VERSION} ${(e&&e.detail)||String(e)}`);
   }
 }
 $("retry").addEventListener("click",()=>{if(!reading){reading=true;doAI().finally(()=>reading=false)}});
 function showResult(rd,fresh){
-  $("resultBox").innerHTML=`<div class="result" id="resultText">${md(rd.body)}</div>`+(rd.model?`<div style="text-align:right;font-size:11px;color:#9a8cc8;margin-top:4px">🔮 ${escapeHTML(rd.model)}</div>`:"");
+  const isAi=rd.mode==="ai"||(!rd.mode&&rd.model);
+  $("resultBox").innerHTML=`<div class="result" id="resultText"><span class="badge ${isAi?"ai":"std"}">${isAi?T.badgeAi:T.badgeStd}</span>`+
+    (rd.fallback?`<div class="fbnote">${T.fallback}</div>`:"")+`${md(rd.body)}</div>`+
+    (rd.model?`<div style="text-align:right;font-size:11px;color:#9a8cc8;margin-top:4px">🔮 ${escapeHTML(rd.model)}</div>`:"")+
+    (rd.fallback&&rd.err?`<div class="errmini">${escapeHTML(rd.err)}</div>`:"");
   $("readBtns").style.display="block";
-  if(fresh){sfx.sparkle()}
+  if(fresh){sfx.kiran()}
   say("bubRead","shiRead",rd.summary||T.mood,rd.mood);
 }
 $("again").addEventListener("click",()=>show("scInput"));
@@ -866,7 +1427,7 @@ function fmtDate(t){const d=new Date(t);return d.toLocaleString(LANG==="ja"?"ja-
 function openHistory(){
   const h=store.get("history",[]);
   if(!h.length){modal(`<h3>${T.histTitle}</h3><p>${T.histEmpty}</p>`);return}
-  modal(`<h3>${T.histTitle}</h3><div class="hist">${h.map((r,i)=>`<button class="hitem" data-i="${i}"><b>${escapeHTML(labelOf(T.genres,r.genre)||"")}</b>　<small>${fmtDate(r.date)}</small><br>${escapeHTML((r.summary||"").slice(0,60))}</button>`).join("")}</div>`);
+  modal(`<h3>${T.histTitle}</h3><div class="hist">${h.map((r,i)=>`<button class="hitem" data-i="${i}">${(r.mode==="ai"||(!r.mode&&r.model))?"🔮":"📖"} <b>${escapeHTML(labelOf(T.genres,r.genre)||"")}</b>　<small>${fmtDate(r.date)}</small><br>${escapeHTML((r.summary||"").slice(0,60))}</button>`).join("")}</div>`);
   document.querySelectorAll(".hitem").forEach(b=>b.addEventListener("click",()=>{const r=h[+b.dataset.i];closeModal();
     state.picked=r.picked;state.genre=r.genre;state.reading=r;saveState();
     document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on",s.id==="scRead"));state.screen="scRead";window.scrollTo(0,0);
@@ -901,7 +1462,7 @@ async function makeImage(){
   ctx.fillStyle=g;ctx.fillRect(0,0,W,c.height);
   ctx.fillStyle="rgba(255,255,255,.6)";for(let i=0;i<120;i++){ctx.beginPath();ctx.arc(Math.random()*W,Math.random()*c.height,Math.random()*2.2,0,7);ctx.fill()}
   ctx.textAlign="center";ctx.fillStyle="#ffe9a3";ctx.font=`900 56px ${FF}`;ctx.fillText(T.title,W/2,90);
-  ctx.font=`600 30px ${FF}`;ctx.fillStyle="#d9cdf7";ctx.fillText(`${labelOf(T.genres,rd.genre)}　${fmtDate(rd.date)}`,W/2,140);
+  ctx.font=`600 30px ${FF}`;ctx.fillStyle="#d9cdf7";ctx.fillText(`${(rd.mode==="ai"||(!rd.mode&&rd.model))?T.badgeAi:T.badgeStd}　${labelOf(T.genres,rd.genre)}　${fmtDate(rd.date)}`,W/2,140);
   const shi=await loadImg(FACES[rd.mood]||FACES.normal);if(shi){const sh=330,sw=sh*shi.width/shi.height;ctx.drawImage(shi,W/2-sw/2,350,sw,sh)}
   // bubble
   ctx.font=`800 34px ${FF}`;const bl=wrap(ctx,rd.summary||T.mood,W-P*2-60).slice(0,3);
@@ -937,13 +1498,15 @@ $("saveImg").addEventListener("click",async()=>{
 });
 
 /* ---------- online / offline ---------- */
-function net(){document.body.classList.toggle("isoff",!navigator.onLine)}
+function net(){document.body.classList.toggle("isoff",!navigator.onLine);if($("scInput").classList.contains("on"))drawModes()}
 window.addEventListener("online",net);window.addEventListener("offline",net);net();
 
 /* ---------- first-run privacy notice, launch counter ---------- */
 const launches=store.get("launches",0)+1;store.set("launches",launches);
 if(!store.get("privacySeen",false)){$("privacy").classList.add("on")}
-$("privacy").addEventListener("click",()=>{$("privacy").classList.remove("on");store.set("privacySeen",true);sfx.pip()});
+function showHow(){modal(`<h3>${T.howTitle}</h3><p>${T.howBody}</p><button class="btn mt" id="howOk">${T.howOk}</button>`);$("howOk").addEventListener("click",()=>{store.set("howSeen",true);closeModal()})}
+$("privacy").addEventListener("click",()=>{$("privacy").classList.remove("on");store.set("privacySeen",true);sfx.pip();if(!store.get("howSeen",false))setTimeout(showHow,250)});
+if(store.get("privacySeen",false)&&!store.get("howSeen",false))setTimeout(showHow,600);
 if(launches===100&&!store.get("thanks100",false)){store.set("thanks100",true);
   setTimeout(()=>modal(`<p style="text-align:center"><img src="shi-joy.png" style="max-width:200px"></p><p style="font-weight:800;text-align:center">${T.thanks100}</p>
   <a class="btn pink" style="display:block;text-align:center;text-decoration:none" href="${INSTA}" target="_blank" rel="noopener">${T.shopBtn}</a>`),800)}
@@ -980,5 +1543,3 @@ if("serviceWorker" in navigator){
 </script>
 </body>
 </html>
-
-</body></html>
